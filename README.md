@@ -10,11 +10,11 @@ No install, no build step: just open a file in your browser.
 
 | Week | Topic | File |
 | ---- | ----- | ---- |
-| 4 | Policy Iteration — tutorial lab study guide | [`Week4_Final_Tutorial_Lab_StudyGuide.html`](Week4_Final_Tutorial_Lab_StudyGuide.html) |
-| 5 | Dynamic Programming, Policy Iteration & Value Iteration | [`Week5_Final_RL_Interactive_Teaching_Guide.html`](Week5_Final_RL_Interactive_Teaching_Guide.html) |
-| 6 | Monte Carlo Methods — prediction & control | [`Week6_Final_Monte_Carlo_Complete_Teaching_Lab.html`](Week6_Final_Monte_Carlo_Complete_Teaching_Lab.html) |
-| 7 | Temporal-Difference Learning — TD(0), SARSA, Q-Learning & the Taxi environment | [`Week7_Final_TD_Concept_Clarity_Taxi_Fixed.html`](Week7_Final_TD_Concept_Clarity_Taxi_Fixed.html) |
-| 8 | Function Approximation → Double Q-Learning → DQN | [`Week8_Final_Complete_Interactive_Concept_Guide.html`](Week8_Final_Complete_Interactive_Concept_Guide.html) |
+| 4 | Policy Iteration — tutorial lab study guide | [`week4-policy-iteration.html`](week4-policy-iteration.html) |
+| 5 | Dynamic Programming, Policy Iteration & Value Iteration | [`week5-dynamic-programming.html`](week5-dynamic-programming.html) |
+| 6 | Monte Carlo Methods — prediction & control | [`week6-monte-carlo.html`](week6-monte-carlo.html) |
+| 7 | Temporal-Difference Learning — TD(0), SARSA, Q-Learning & the Taxi environment | [`week7-temporal-difference.html`](week7-temporal-difference.html) |
+| 8 | Function Approximation → Double Q-Learning → DQN | [`week8-function-approximation-dqn.html`](week8-function-approximation-dqn.html) |
 
 ## 🧠 Topics covered
 
@@ -27,10 +27,14 @@ No install, no build step: just open a file in your browser.
 
 ## ▶️ How to use
 
+**Read them online:** <https://radhika-verma06.github.io/reinforcement-learning/>
+
+**Or run them locally:**
+
 ```bash
 git clone https://github.com/radhika-verma06/reinforcement-learning.git
 cd reinforcement-learning
-open Week5_Final_RL_Interactive_Teaching_Guide.html   # macOS
+open week5-dynamic-programming.html   # macOS
 ```
 
 On Windows/Linux, just double-click any `.html` file, or open it from your browser with `File → Open`.

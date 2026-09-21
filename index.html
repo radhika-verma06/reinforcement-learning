@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Reinforcement Learning — Visual Study Guides (Weeks 4–8)</title>
+<meta name="description" content="Interactive, visual study guides for core Reinforcement Learning topics — MDPs, Dynamic Programming, Monte Carlo, TD Learning and DQN." />
+<style>
+  :root {
+    --bg: #0b1020;
+    --card: #141b33;
+    --card-hover: #1b2440;
+    --border: #26304f;
+    --text: #e8ecf8;
+    --muted: #98a3c4;
+    --accent: #6ea8fe;
+    --accent-2: #8be9c0;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 3rem 1.25rem 4rem;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: radial-gradient(1200px 600px at 50% -10%, #1a2444 0%, var(--bg) 60%);
+    color: var(--text);
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+  .wrap { max-width: 880px; margin: 0 auto; }
+  .eyebrow {
+    display: inline-block;
+    font-size: .78rem;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--accent-2);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: .25rem .75rem;
+    margin-bottom: 1.25rem;
+  }
+  h1 {
+    font-size: clamp(1.9rem, 5vw, 2.8rem);
+    line-height: 1.15;
+    margin: 0 0 .75rem;
+    letter-spacing: -.02em;
+  }
+  h1 span { color: var(--accent); }
+  .lede { color: var(--muted); font-size: 1.05rem; margin: 0 0 2.5rem; max-width: 62ch; }
+  .grid { display: grid; gap: 1rem; }
+  @media (min-width: 640px) { .grid { grid-template-columns: 1fr 1fr; } }
+  a.card {
+    display: block;
+    padding: 1.25rem 1.35rem;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    text-decoration: none;
+    color: inherit;
+    transition: background .18s ease, border-color .18s ease, transform .18s ease;
+  }
+  a.card:hover {
+    background: var(--card-hover);
+    border-color: var(--accent);
+    transform: translateY(-2px);
+  }
+  .week {
+    font-size: .75rem;
+    font-weight: 700;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+  .card h2 { font-size: 1.05rem; margin: .4rem 0 .35rem; line-height: 1.35; }
+  .card p { margin: 0; font-size: .88rem; color: var(--muted); }
+  footer {
+    margin-top: 3rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border);
+    font-size: .85rem;
+    color: var(--muted);
+  }
+  footer a { color: var(--accent); text-decoration: none; }
+  footer a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <span class="eyebrow">Reinforcement Learning · Weeks 4–8</span>
+    <h1>RL concepts, made <span>easier to see</span></h1>
+    <p class="lede">
+      Interactive HTML study guides covering the core Reinforcement Learning topics — from MDPs and
+      dynamic programming through Monte Carlo, temporal-difference learning and DQN. Each one is
+      self-contained with worked examples and visuals. No install, nothing to build.
+    </p>
+
+    <div class="grid">
+      <a class="card" href="week4-policy-iteration.html">
+        <div class="week">Week 4</div>
+        <h2>Policy Iteration</h2>
+        <p>Tutorial lab study guide — policy evaluation and improvement, step by step.</p>
+      </a>
+      <a class="card" href="week5-dynamic-programming.html">
+        <div class="week">Week 5</div>
+        <h2>Dynamic Programming, Policy &amp; Value Iteration</h2>
+        <p>Interactive teaching guide comparing policy iteration with value iteration.</p>
+      </a>
+      <a class="card" href="week6-monte-carlo.html">
+        <div class="week">Week 6</div>
+        <h2>Monte Carlo Methods</h2>
+        <p>Prediction and control — first-visit vs every-visit, and ε-greedy exploration.</p>
+      </a>
+      <a class="card" href="week7-temporal-difference.html">
+        <div class="week">Week 7</div>
+        <h2>Temporal-Difference Learning</h2>
+        <p>TD(0), SARSA and Q-Learning, with the Taxi environment worked through.</p>
+      </a>
+      <a class="card" href="week8-function-approximation-dqn.html">
+        <div class="week">Week 8</div>
+        <h2>Function Approximation → Double Q-Learning → DQN</h2>
+        <p>Why tables break down, neural value estimation, and the DQN building blocks.</p>
+      </a>
+    </div>
+
+    <footer>
+      Made by <a href="https://github.com/radhika-verma06">Radhika Verma</a> ·
+      <a href="https://github.com/radhika-verma06/reinforcement-learning">Source on GitHub</a>
+    </footer>
+  </div>
+</body>
+</html>
