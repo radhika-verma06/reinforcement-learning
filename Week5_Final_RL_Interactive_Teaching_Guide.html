@@ -1,0 +1,2479 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Week 5 RL Teaching Guide — Dynamic Programming, Policy & Value Iteration</title>
+<style>
+  :root{
+    --bg:#f4f2ed;
+    --paper:#fbfaf7;
+    --ink:#25282b;
+    --muted:#6b7075;
+    --line:#d8d5cf;
+    --accent:#52636b;
+    --accent2:#737c74;
+    --soft:#ece9e2;
+    --soft2:#e7ebec;
+    --code:#202528;
+    --codeInk:#e8ecee;
+    --warn:#6f5f50;
+    --shadow:0 8px 26px rgba(35,35,35,.07);
+  }
+
+
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    line-height:1.6;
+  }
+
+
+  .topbar{
+    position:sticky; top:0; z-index:1000;
+    background:rgba(244,242,237,.95);
+    backdrop-filter: blur(10px);
+    border-bottom:1px solid var(--line);
+  }
+  .topbar-inner{
+    max-width:1400px; margin:auto; padding:12px 20px;
+    display:flex; align-items:center; gap:14px; flex-wrap:wrap;
+  }
+  .brand{font-weight:800; letter-spacing:-.02em; margin-right:auto}
+  .current{
+    font-size:.88rem; color:var(--muted);
+    padding:6px 10px; border:1px solid var(--line); border-radius:999px;
+    background:var(--paper);
+  }
+  .progress-wrap{width:140px;height:6px;background:#dedbd4;border-radius:999px;overflow:hidden}
+  .progress{height:100%;width:0;background:var(--accent);transition:.2s}
+
+
+  .layout{
+    max-width:1400px; margin:0 auto; padding:28px 20px 80px;
+    display:grid; grid-template-columns:280px minmax(0,1fr); gap:28px;
+  }
+  aside{
+    position:sticky; top:76px; align-self:start;
+    background:var(--paper); border:1px solid var(--line);
+    border-radius:18px; padding:18px; box-shadow:var(--shadow);
+    max-height:calc(100vh - 100px); overflow:auto;
+  }
+  aside h3{font-size:.82rem; text-transform:uppercase; letter-spacing:.09em; color:var(--muted); margin:4px 0 10px}
+  .nav-btn{
+    width:100%; border:0; background:transparent; color:var(--ink);
+    text-align:left; padding:10px 11px; border-radius:10px; cursor:pointer;
+    font-size:.92rem; margin-bottom:4px;
+  }
+  .nav-btn:hover,.nav-btn.active{background:var(--soft2)}
+  .nav-btn small{display:block;color:var(--muted);margin-top:2px;line-height:1.35}
+  .divider{height:1px;background:var(--line);margin:16px 0}
+
+
+  main{min-width:0}
+  .hero{
+    background:linear-gradient(140deg,var(--paper),#eeeae2);
+    border:1px solid var(--line); border-radius:24px; padding:34px;
+    box-shadow:var(--shadow); margin-bottom:24px;
+  }
+  .eyebrow{font-size:.8rem;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);font-weight:700}
+  h1{font-size:clamp(2rem,4vw,3.6rem);line-height:1.05;margin:10px 0 16px;letter-spacing:-.04em}
+  .hero p{font-size:1.06rem;max-width:900px}
+  .chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:18px}
+  .chip{padding:7px 11px;border-radius:999px;border:1px solid var(--line);background:var(--paper);font-size:.85rem;color:var(--muted)}
+
+
+  .section{
+    display:none;
+    background:var(--paper); border:1px solid var(--line);
+    border-radius:22px; padding:28px; box-shadow:var(--shadow); margin-bottom:24px;
+  }
+  .section.active{display:block}
+  .section h2{font-size:2rem;line-height:1.15;margin:0 0 8px;letter-spacing:-.03em}
+  .section h3{margin-top:28px;font-size:1.28rem}
+  .section h4{margin-top:22px;font-size:1.06rem}
+  .subhead{color:var(--muted);margin:0 0 22px}
+  .nb-label{
+    display:inline-flex; gap:8px; align-items:center;
+    padding:7px 10px; border:1px solid var(--line); border-radius:999px;
+    background:var(--soft); color:var(--muted); font-size:.82rem; margin-bottom:12px;
+  }
+  .nb-label b{color:var(--ink)}
+  .callout{
+    border-left:4px solid var(--accent); background:var(--soft2);
+    padding:15px 18px; border-radius:0 12px 12px 0; margin:16px 0;
+  }
+  .callout strong{display:block;margin-bottom:4px}
+  .teacher{
+    border:1px dashed #b9b4aa; padding:15px 18px; border-radius:12px; background:#faf8f3;
+  }
+  .teacher::before{content:"Key explanation";display:block;font-size:.78rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);font-weight:800;margin-bottom:6px}
+
+
+  .grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+  .grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+  .card{
+    border:1px solid var(--line); border-radius:15px; padding:16px; background:#fffdfa;
+  }
+  .card h4{margin:0 0 5px}
+  .card p:last-child{margin-bottom:0}
+
+
+  .eq{
+    font-family:"Times New Roman", Georgia, serif;
+    font-size:1.18rem; text-align:center; overflow:auto;
+    background:#f6f4ef; border:1px solid var(--line);
+    border-radius:14px; padding:16px; margin:14px 0;
+  }
+  .eq.big{font-size:1.45rem;padding:20px}
+  .mathword{font-family:Georgia,serif;font-style:italic}
+
+
+  pre{
+    background:var(--code); color:var(--codeInk);
+    padding:18px; border-radius:14px; overflow:auto;
+    font-size:.86rem; line-height:1.55; border:1px solid #353c40;
+  }
+  code{font-family:"SFMono-Regular",Consolas,"Liberation Mono",monospace}
+  .inline{background:#eeece6;padding:2px 6px;border-radius:6px;font-family:monospace;font-size:.92em}
+  .code-line{display:block}
+  .hi{background:rgba(255,255,255,.08);margin:0 -6px;padding:0 6px;border-left:3px solid #9fb0b7}
+
+
+  .flow{
+    display:flex; gap:8px; align-items:center; flex-wrap:wrap;
+    margin:14px 0;
+  }
+  .flow span{
+    padding:9px 12px; border:1px solid var(--line); border-radius:10px; background:#fffdfa;
+  }
+  .arrow{color:var(--muted);font-weight:900}
+
+
+  details{
+    border:1px solid var(--line); border-radius:12px; margin:12px 0; background:#fffdfa;
+  }
+  summary{cursor:pointer;padding:13px 15px;font-weight:700}
+  details > div{padding:0 15px 15px;color:var(--ink)}
+
+
+  table{width:100%;border-collapse:collapse;margin:15px 0;font-size:.94rem}
+  th,td{border-bottom:1px solid var(--line);padding:10px;text-align:left;vertical-align:top}
+  th{color:var(--muted);font-size:.8rem;text-transform:uppercase;letter-spacing:.06em}
+
+
+  .steps{counter-reset:step}
+  .step{
+    position:relative;padding:0 0 20px 44px;margin:0;
+    border-left:2px solid var(--line); margin-left:16px;
+  }
+  .step:last-child{border-left-color:transparent}
+  .step::before{
+    counter-increment:step;content:counter(step);
+    position:absolute;left:-16px;top:0;width:30px;height:30px;
+    border-radius:50%;display:grid;place-items:center;
+    background:var(--accent);color:white;font-weight:800;font-size:.82rem;
+  }
+
+
+  .k-buttons,.mode-buttons{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
+  button.ctrl{
+    border:1px solid var(--line);background:#fffdfa;color:var(--ink);
+    padding:8px 12px;border-radius:10px;cursor:pointer;font-weight:650;
+  }
+  button.ctrl:hover,button.ctrl.active{background:var(--accent);color:white;border-color:var(--accent)}
+  .matrix{
+    width:min(440px,100%);display:grid;grid-template-columns:repeat(4,1fr);
+    gap:5px;margin:15px auto;
+  }
+  .cell{
+    min-height:68px;display:flex;align-items:center;justify-content:center;
+    border:1px solid var(--line);background:#fffdfa;border-radius:8px;
+    font-family:monospace;font-weight:700;font-size:1rem;
+  }
+  .cell.term{background:#dfe3e1}
+  .matrix-note{text-align:center;color:var(--muted);font-size:.9rem}
+
+
+  .playground{
+    display:grid;grid-template-columns:1fr 1fr;gap:20px;
+    border:1px solid var(--line);padding:18px;border-radius:16px;background:#faf9f5;
+  }
+  .inputs{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  label{font-size:.8rem;color:var(--muted);font-weight:700}
+  input{
+    width:100%;padding:9px 10px;margin-top:4px;border:1px solid var(--line);
+    border-radius:9px;background:white;color:var(--ink);
+  }
+  .result{
+    background:var(--soft2);padding:15px;border-radius:12px;min-height:100%;
+  }
+  .result strong{font-size:1.2rem}
+  .quiz{
+    border:1px solid var(--line);border-radius:14px;padding:16px;margin:12px 0;background:#fffdfa;
+  }
+  .answer{display:none;margin-top:10px;padding:12px;border-radius:10px;background:var(--soft2)}
+  .answer.show{display:block}
+
+
+  .notebook-map{
+    display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:18px;
+  }
+  .nbcard{
+    border:1px solid var(--line);border-radius:15px;padding:16px;background:#fffdfa;cursor:pointer;
+  }
+  .nbcard:hover{border-color:#a8a39a}
+  .nbnum{
+    font-size:.76rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);font-weight:800;
+  }
+  .nbcard strong{display:block;margin:4px 0}
+  .nbcard small{color:var(--muted)}
+
+
+  .sourcebox{
+    margin-top:28px;border-top:1px solid var(--line);padding-top:18px;color:var(--muted);font-size:.88rem;
+  }
+
+
+  
+  .concept-strip{
+    display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:16px 0;
+  }
+  .concept-box{
+    border:1px solid var(--line);border-radius:14px;padding:15px;background:#fffdfa;
+  }
+  .concept-box .tag{
+    display:inline-block;font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;
+    color:var(--muted);font-weight:800;margin-bottom:6px;
+  }
+  .mini-diagram{
+    display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;
+    padding:16px;border:1px solid var(--line);border-radius:14px;background:#f7f5f0;margin:14px 0;
+  }
+  .node{
+    min-width:72px;padding:12px 14px;border-radius:12px;border:1px solid var(--line);
+    background:white;text-align:center;font-weight:750;
+  }
+  .node.action{background:#eceff0}
+  .node.reward{background:#f1eee8}
+  .why-list{
+    display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:14px 0;
+  }
+  .why-card{
+    border-left:4px solid var(--accent2);background:#f8f6f1;padding:14px 16px;border-radius:0 12px 12px 0;
+  }
+  .why-card b{display:block;margin-bottom:4px}
+  .compare-line{
+    display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:center;margin:14px 0;
+  }
+  .compare-line .side{
+    border:1px solid var(--line);border-radius:12px;padding:14px;background:#fffdfa;
+  }
+  .compare-line .mid{font-weight:900;color:var(--muted)}
+
+
+  
+  .takeaway{
+    border:2px solid var(--accent);background:#f3f5f4;border-radius:16px;padding:18px;margin:20px 0;
+  }
+  .takeaway h4{margin:0 0 8px;font-size:1.08rem}
+  .takeaway .bigline{font-size:1.12rem;font-weight:800;line-height:1.45}
+  .code-purpose{
+    display:grid;grid-template-columns:180px 1fr;gap:12px;align-items:start;
+    border-bottom:1px solid var(--line);padding:10px 0;
+  }
+  .code-purpose:last-child{border-bottom:0}
+  @media (max-width:700px){.code-purpose{grid-template-columns:1fr}}
+
+
+  
+  .mcq label{
+    display:block;
+    margin:9px 0;
+    padding:10px 12px;
+    border:1px solid var(--line);
+    border-radius:10px;
+    background:#faf9f5;
+    cursor:pointer;
+    color:var(--ink);
+    font-weight:500;
+  }
+  .mcq label:hover{background:var(--soft2)}
+  .mcq input[type="radio"]{width:auto;margin:0 8px 0 0;vertical-align:middle}
+  .mcq.correct{border-color:#87968e}
+  .mcq.incorrect{border-color:#9c8a7c}
+  .mcq .feedback{
+    display:none;
+    margin-top:10px;
+    padding:10px 12px;
+    border-radius:10px;
+    background:var(--soft);
+    font-weight:700;
+  }
+  .mcq .feedback.show{display:block}
+
+
+  @media (max-width:980px){
+    .layout{grid-template-columns:1fr}
+    aside{position:relative;top:auto;max-height:none}
+    .grid2,.grid3,.notebook-map,.playground,.concept-strip,.why-list{grid-template-columns:1fr}
+  }
+  @media print{
+    .topbar,aside,.k-buttons,.mode-buttons,button.ctrl{display:none!important}
+    .layout{display:block;max-width:none;padding:0}
+    .section{display:block!important;box-shadow:none;break-inside:avoid}
+    body{background:white}
+  }
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">RL Week 5 · Teaching Guide</div>
+    <div class="current" id="currentLabel">Overview</div>
+    <div class="progress-wrap"><div class="progress" id="progressBar"></div></div>
+  </div>
+</div>
+
+
+<div class="layout">
+<aside>
+  <h3>Topic / notebook navigator</h3>
+  <button class="nav-btn active" data-target="overview">0. Big Picture <small>Where all notebooks fit</small></button>
+  <button class="nav-btn" data-target="foundation">1. Foundations <small>MDP, policy, values, Bellman</small></button>
+  <button class="nav-btn" data-target="gridworld">2. GridWorld-Sutton-Barto-Chap04(1).ipynb <small>Policy Evaluation · Sutton & Barto</small></button>
+  <button class="nav-btn" data-target="policy">3. Policy Iteration <small>Evaluation + improvement</small></button>
+  <button class="nav-btn" data-target="value">4. 43008-Week5-MDPs-ValueIteration... <small>Bellman optimality + code</small></button>
+  <button class="nav-btn" data-target="drone">5. 43008-Week5-MDPs-ValueIteration... <small>Drone MDP scenario</small></button>
+  <button class="nav-btn" data-target="gym">6. 43008-Week5-SolvingMDPs-GYMNASIUM(1).ipynb <small>FrozenLake environment</small></button>
+  <button class="nav-btn" data-target="compare">7. Compare Algorithms <small>What changes and why</small></button>
+  <button class="nav-btn" data-target="quiz">8. MCQs <small>Test the key Week 5 concepts</small></button>
+  <div class="divider"></div>
+  <h3>Display depth</h3>
+  <div class="mode-buttons">
+    <button class="ctrl active" id="allMode">Full</button>
+    <button class="ctrl" id="coreMode">Core only</button>
+  </div>
+  <div style="font-size:.82rem;color:var(--muted);margin-top:8px">
+    “Core only” hides advanced implementation notes while you teach.
+  </div>
+</aside>
+
+
+<main>
+  <div class="hero">
+    <div class="eyebrow">43008 Reinforcement Learning · Week 5</div>
+    <h1>Dynamic Programming, Policy Iteration & Value Iteration</h1>
+    <p>
+      A topic-wise classroom guide that keeps the notebooks separate. Use the left navigator to move through
+      the conceptual story, the Sutton &amp; Barto GridWorld, the custom Value Iteration notebook, the drone MDP,
+      and finally the Gymnasium FrozenLake notebook.
+    </p>
+    <div class="chips">
+      <span class="chip">Neutral classroom design</span>
+      <span class="chip">Interactive GridWorld</span>
+      <span class="chip">Math ↔ code mapping</span>
+      <span class="chip">Bellman playground</span>
+      <span class="chip">Revealable checks</span>
+    </div>
+  </div>
+
+
+  <!-- OVERVIEW -->
+  <section class="section active" id="overview">
+    <div class="nb-label"><b>Start here</b> · Do not open a notebook yet</div>
+    <h2>The whole week as one story</h2>
+    <p class="subhead">Students understand this topic much more easily when each algorithm answers a different question.</p>
+
+
+    <div class="grid2">
+      <div class="card">
+        <h4>Policy Evaluation</h4>
+        <p><b>Question:</b> “If I follow this fixed policy, how good is each state?”</p>
+        <p><b>Main operation:</b> average the possible actions according to the policy.</p>
+      </div>
+      <div class="card">
+        <h4>Policy Improvement</h4>
+        <p><b>Question:</b> “Now that I know the values, which action looks best?”</p>
+        <p><b>Main operation:</b> choose the action with the largest expected return.</p>
+      </div>
+      <div class="card">
+        <h4>Policy Iteration</h4>
+        <p><b>Question:</b> “Can I evaluate, improve, and repeat until the policy stops changing?”</p>
+        <p><b>Main operation:</b> Evaluation → Improvement → repeat.</p>
+      </div>
+      <div class="card">
+        <h4>Value Iteration</h4>
+        <p><b>Question:</b> “Can I directly keep the best action during each value update?”</p>
+        <p><b>Main operation:</b> take a <span class="inline">max</span> inside the Bellman update.</p>
+      </div>
+    </div>
+
+
+    <div class="callout">
+      <strong>One sentence that connects everything</strong>
+      Policy Evaluation asks what happens under a given behaviour. Value Iteration asks what the best behaviour could achieve.
+    </div>
+
+
+    <h3>Notebook sequence for this week</h3>
+    <div class="notebook-map">
+      <div class="nbcard" onclick="openSection('gridworld')">
+        <div class="nbnum">GridWorld notebook</div>
+        <strong>GridWorld-Sutton-Barto-Chap04(1).ipynb</strong>
+        <small>Use for: policy evaluation, random policy, Bellman expectation, synchronous vs in-place updates.</small>
+      </div>
+      <div class="nbcard" onclick="openSection('value')">
+        <div class="nbnum">Value Iteration solution notebook</div>
+        <strong>43008-Week5-MDPs-ValueIteration-Solution(1).ipynb</strong>
+        <small>Use for: Value Iteration, Policy Iteration, code functions, custom drone MDP, comparison.</small>
+      </div>
+      <div class="nbcard" onclick="openSection('value')">
+        <div class="nbnum">Value Iteration student notebook</div>
+        <strong>43008-Week5-MDPs-ValueIteration(1).ipynb</strong>
+        <small>Student version of the same Week 5 algorithm structure. Use while students complete/follow code.</small>
+      </div>
+      <div class="nbcard" onclick="openSection('gym')">
+        <div class="nbnum">Gymnasium notebook</div>
+        <strong>43008-Week5-SolvingMDPs-GYMNASIUM(1).ipynb</strong>
+        <small>Use for: applying the same algorithms to FrozenLake through Gymnasium.</small>
+      </div>
+    </div>
+
+
+    <h3>Recommended classroom order</h3>
+    <div class="flow">
+      <span>MDP recap</span><b class="arrow">→</b>
+      <span>Value functions</span><b class="arrow">→</b>
+      <span>Bellman expectation</span><b class="arrow">→</b>
+      <span>GridWorld policy evaluation</span><b class="arrow">→</b>
+      <span>Policy improvement</span><b class="arrow">→</b>
+      <span>Policy iteration</span><b class="arrow">→</b>
+      <span>Bellman optimality</span><b class="arrow">→</b>
+      <span>Value iteration</span><b class="arrow">→</b>
+      <span>FrozenLake</span>
+    </div>
+  </section>
+
+
+  <!-- FOUNDATION -->
+  <section class="section" id="foundation">
+    <div class="nb-label"><b>Concept foundation</b> · Week 5 lecture before notebooks</div>
+    <h2>1. MDP → Policy → Values → Bellman</h2>
+    <p class="subhead">These concepts form the foundation for the Dynamic Programming algorithms used this week.</p>
+
+
+    <h3>1.1 Markov Decision Process</h3>
+    <div class="eq big">(S, A, P, R, γ)</div>
+    <table>
+      <tr><th>Symbol</th><th>Meaning</th><th>Simple reading</th></tr>
+      <tr><td><b>S</b></td><td>State space</td><td>Where can the agent be?</td></tr>
+      <tr><td><b>A</b></td><td>Action space</td><td>What can the agent do?</td></tr>
+      <tr><td><b>P(s′|s,a)</b></td><td>Transition probability</td><td>If I do action a in state s, where might I land?</td></tr>
+      <tr><td><b>R(s,a)</b></td><td>Immediate reward</td><td>What do I receive now?</td></tr>
+      <tr><td><b>γ</b></td><td>Discount factor</td><td>How much do I care about future reward?</td></tr>
+    </table>
+
+
+    <div class="teacher">
+      The environment owns P and R. The agent does not decide the physics of the world. The agent controls its policy: which action it chooses.
+    </div>
+
+
+    <h3>1.1.1 Why do we need an MDP at all?</h3>
+    <p>
+      A normal one-step decision only asks, “What happens if I do this now?” Reinforcement Learning is harder because
+      an action can change the next state, and that next state changes what becomes possible later.
+      So we need a framework that keeps track of <b>where we are, what we can do, what may happen next, and what reward follows</b>.
+    </p>
+
+
+    <div class="mini-diagram">
+      <div class="node">State<br><small>s</small></div>
+      <div class="arrow">→ choose →</div>
+      <div class="node action">Action<br><small>a</small></div>
+      <div class="arrow">→ environment →</div>
+      <div class="node">Next state<br><small>s′</small></div>
+      <div class="arrow">+</div>
+      <div class="node reward">Reward<br><small>r</small></div>
+    </div>
+
+
+    <div class="why-list">
+      <div class="why-card">
+        <b>Why is the next state important?</b>
+        Because today's action changes tomorrow's situation. A small reward now may move the agent into a much better state later.
+      </div>
+      <div class="why-card">
+        <b>Why is reward separate from value?</b>
+        Reward is what we receive immediately. Value includes the reward now <i>and</i> the future rewards that may follow.
+      </div>
+      <div class="why-card">
+        <b>Why do we need transition probabilities?</b>
+        The same action may not always have the same outcome. P tells us how uncertain the environment is.
+      </div>
+      <div class="why-card">
+        <b>Why is this called “Markov”?</b>
+        The model assumes the current state contains the information needed to predict the next step. We do not need the entire past history.
+      </div>
+    </div>
+
+
+    <h3>1.2 Two probabilities students must not mix up</h3>
+    <div class="grid2">
+      <div class="card">
+        <h4>π(a | s)</h4>
+        <p><b>Agent-side probability.</b></p>
+        <p>Probability that the policy chooses action <i>a</i> in state <i>s</i>.</p>
+      </div>
+      <div class="card">
+        <h4>P(s′ | s, a)</h4>
+        <p><b>Environment-side probability.</b></p>
+        <p>Probability of arriving in state <i>s′</i> after action <i>a</i> from state <i>s</i>.</p>
+      </div>
+    </div>
+
+
+    <h3>1.3 State value and action value</h3>
+
+
+    <div class="concept-strip">
+      <div class="concept-box">
+        <span class="tag">Immediate</span>
+        <b>Reward</b>
+        <p>What did I get from this one transition?</p>
+      </div>
+      <div class="concept-box">
+        <span class="tag">Long-term</span>
+        <b>Return</b>
+        <p>What total discounted reward do I collect from now onward?</p>
+      </div>
+      <div class="concept-box">
+        <span class="tag">Expected long-term</span>
+        <b>Value</b>
+        <p>Before the future actually happens, what return do I expect on average?</p>
+      </div>
+    </div>
+
+
+    <div class="eq">v<sub>π</sub>(s) = E<sub>π</sub>[G<sub>t</sub> | S<sub>t</sub> = s]</div>
+    <p><b>Meaning:</b> if I start in state <i>s</i> and then follow policy π, what total future reward should I expect?</p>
+
+
+    <div class="eq">q<sub>π</sub>(s,a) = E<sub>π</sub>[G<sub>t</sub> | S<sub>t</sub> = s, A<sub>t</sub> = a]</div>
+    <p><b>Meaning:</b> if I am in state <i>s</i>, take action <i>a</i> now, then follow π, how good is that choice?</p>
+
+
+
+
+    <h3>1.3.1 State value vs action value: what is the practical difference?</h3>
+    <div class="compare-line">
+      <div class="side">
+        <b>vπ(s)</b><br>
+        “I am in this state. My policy will decide what I do. Overall, how good is being here?”
+      </div>
+      <div class="mid">vs</div>
+      <div class="side">
+        <b>qπ(s,a)</b><br>
+        “I am in this state and I am specifically considering this action. How good is this choice?”
+      </div>
+    </div>
+    <p>
+      This distinction matters because a state can be valuable even if some actions from it are bad.
+      The policy determines which action values contribute to the state value.
+    </p>
+
+
+    <h3>1.4 Relationship: state → actions</h3>
+    <div class="eq">v<sub>π</sub>(s) = Σ<sub>a</sub> π(a|s) q<sub>π</sub>(s,a)</div>
+    <p>The value of the state is the policy-weighted average of the available action values.</p>
+
+
+    <h3>1.5 Relationship: action → next states</h3>
+    <div class="eq">q<sub>π</sub>(s,a) = R(s,a) + γ Σ<sub>s′</sub> P(s′|s,a) v<sub>π</sub>(s′)</div>
+    <p>An action is worth its immediate reward plus the discounted expected value of the states it can lead to.</p>
+
+
+    <h3>1.6 Bellman Expectation Equation</h3>
+    <div class="eq big">
+      v<sub>π</sub>(s) =
+      Σ<sub>a</sub> π(a|s)
+      [ R(s,a) + γ Σ<sub>s′</sub> P(s′|s,a) v<sub>π</sub>(s′) ]
+    </div>
+    <div class="teacher">
+      Read it from left to right: “For this state, consider what my policy might do. For each action, take the immediate reward plus the expected future value. Then average those action outcomes according to the policy.”
+    </div>
+
+
+
+
+    <h3>1.6.1 What is a Bellman backup?</h3>
+    <p>
+      A <b>backup</b> means using the values of successor states to update the value of the current state.
+      Instead of solving the whole future in one go, we repeatedly push useful information backward through the state space.
+    </p>
+    <div class="mini-diagram">
+      <div class="node">Current state<br><small>V(s)</small></div>
+      <div class="arrow">← update using ←</div>
+      <div class="node reward">r + γ</div>
+      <div class="node">Successor value<br><small>V(s′)</small></div>
+    </div>
+    <div class="why-list">
+      <div class="why-card">
+        <b>Why is the equation self-referential?</b>
+        V(s) is defined using V(s′). That is not a problem: Dynamic Programming repeatedly updates the values until the estimates become consistent with one another.
+      </div>
+      <div class="why-card">
+        <b>Why does repeated updating converge?</b>
+        Each sweep incorporates more of the future. In the supplied examples, the estimates gradually stabilise and the maximum change becomes very small.
+      </div>
+    </div>
+
+
+    <details>
+      <summary>Why is Bellman useful?</summary>
+      <div>
+        Instead of trying to calculate an entire lifetime of rewards in one giant expression, Bellman writes a long-horizon problem recursively:
+        <b>value now = reward now + value later</b>. Dynamic Programming repeatedly applies that smaller relationship until the values stabilise.
+      </div>
+    </details>
+
+
+    <h3>1.7 Prediction vs control</h3>
+    <table>
+      <tr><th>Problem</th><th>Given</th><th>Want</th><th>Week 5 algorithm</th></tr>
+      <tr><td>Prediction</td><td>MDP + fixed policy π</td><td>v<sub>π</sub></td><td>Iterative Policy Evaluation</td></tr>
+      <tr><td>Control</td><td>MDP</td><td>v* and π*</td><td>Policy Iteration / Value Iteration</td></tr>
+    </table>
+  </section>
+
+
+  <!-- GRIDWORLD -->
+  <section class="section" id="gridworld">
+    <div class="nb-label"><b>GridWorld-Sutton-Barto-Chap04(1).ipynb</b></div>
+    <h2>2. GridWorld: Policy Evaluation</h2>
+    <p class="subhead">This notebook is the bridge between the Bellman equation and actual repeated numerical updates.</p>
+
+
+    <h3>2.1 Problem setup</h3>
+    <div class="grid3">
+      <div class="card"><h4>Grid</h4><p>4 × 4 = 16 states</p></div>
+      <div class="card"><h4>Terminal states</h4><p>Top-left and bottom-right</p></div>
+      <div class="card"><h4>Actions</h4><p>Left, Up, Right, Down</p></div>
+      <div class="card"><h4>Reward</h4><p>−1 for each transition</p></div>
+      <div class="card"><h4>Policy</h4><p>Uniform random: 0.25 per action</p></div>
+      <div class="card"><h4>Discount</h4><p>γ = 1 in this example</p></div>
+    </div>
+
+
+    <div class="callout">
+      <strong>Key distinction</strong>
+      The policy is stochastic because it randomly picks one of four actions. The transition after an action is deterministic in this GridWorld.
+      For example, if RIGHT from state 5 leads to state 6, then P(6|5,RIGHT)=1.
+    </div>
+
+
+
+
+    <h3>2.1.1 What exactly are we trying to find here?</h3>
+    <p>
+      We are <b>not yet trying to find the best policy</b>. The policy is already given: choose each direction with probability 0.25.
+      The task is only to evaluate that behaviour.
+    </p>
+    <div class="callout">
+      <strong>Question being answered by this notebook</strong>
+      “If the agent keeps behaving randomly like this, how costly is it to start from each square before eventually reaching a terminal state?”
+    </div>
+
+
+    <h3>2.1.2 Why does every step have reward −1?</h3>
+    <p>
+      The negative reward makes unnecessary movement costly. Reaching a terminal state quickly avoids accumulating more −1 rewards.
+      Therefore, values naturally encode something similar to expected remaining path length.
+    </p>
+
+
+    <h3>2.2 What if the action goes off-grid?</h3>
+    <p>The action is still allowed, but the state does not change. The agent still receives the −1 step reward.</p>
+    <div class="teacher">
+      “Think of it as bumping into a wall. You used a time step, so you pay −1, but you stay in the same square.”
+    </div>
+
+
+    <h3>2.3 Why the Bellman equation simplifies here</h3>
+    <p>In the general case, an action may have several possible next states:</p>
+    <div class="eq">Σ<sub>s′</sub> P(s′|s,a)[r + γV(s′)]</div>
+    <p>Here, each selected action has only one successor state with probability 1. So the inner expectation effectively becomes one non-zero term.</p>
+
+
+    <h3>2.4 Watch value information propagate</h3>
+    <p>Click the iterations. These are the rounded values shown in the supplied Sutton &amp; Barto teaching material.</p>
+    <div class="k-buttons">
+      <button class="ctrl active" onclick="showK('k0',this)">k = 0</button>
+      <button class="ctrl" onclick="showK('k1',this)">k = 1</button>
+      <button class="ctrl" onclick="showK('k2',this)">k = 2</button>
+      <button class="ctrl" onclick="showK('k3',this)">k = 3</button>
+      <button class="ctrl" onclick="showK('kinf',this)">converged</button>
+    </div>
+    <div class="matrix" id="gridMatrix"></div>
+    <div class="matrix-note" id="gridNote">Initial estimate: every value starts at 0.</div>
+
+
+
+
+    <h3>2.4.1 Why do we initialise all values to zero?</h3>
+    <p>
+      Dynamic Programming needs a starting estimate. Zero is simply a convenient neutral initialisation here.
+      It does <b>not</b> mean every state is truly worth zero. The repeated backups correct the estimates.
+    </p>
+
+
+    <h3>2.4.2 What changes from one iteration to the next?</h3>
+    <div class="steps">
+      <div class="step"><b>k = 0:</b> we only have our initial guesses.</div>
+      <div class="step"><b>k = 1:</b> each state sees the immediate reward from one step.</div>
+      <div class="step"><b>k = 2:</b> each state now also feels what happened one layer farther away.</div>
+      <div class="step"><b>Later sweeps:</b> information from the terminal states and repeated step costs propagates throughout the grid.</div>
+      <div class="step"><b>Convergence:</b> another sweep barely changes any value.</div>
+    </div>
+
+
+    <h3>2.5 First update: where does this formula come from?</h3>
+
+
+    <p>
+      The calculation
+      <b>V<sub>1</sub>(s) = 0.25(−1+0) + 0.25(−1+0) + 0.25(−1+0) + 0.25(−1+0)</b>
+      is not a new formula. It comes directly from the <b>Bellman Expectation Equation</b> used for Policy Evaluation.
+    </p>
+
+
+    <div class="eq big">
+      V<sub>k+1</sub>(s) =
+      Σ<sub>a</sub> π(a|s)
+      [ R(s,a) + γ Σ<sub>s′</sub>P(s′|s,a)V<sub>k</sub>(s′) ]
+    </div>
+
+
+    <p>For this GridWorld, we simplify that general equation using the rules of the problem.</p>
+
+
+    <div class="steps">
+      <div class="step">
+        <b>Step 1 — There are four actions.</b><br>
+        LEFT, RIGHT, UP and DOWN. Therefore the outer summation over actions becomes four separate terms.
+      </div>
+      <div class="step">
+        <b>Step 2 — The policy is uniform random.</b><br>
+        Each action is chosen with probability 0.25, so every term is multiplied by <b>0.25</b>.
+      </div>
+      <div class="step">
+        <b>Step 3 — Every transition gives reward −1.</b><br>
+        Therefore <span class="mathword">R(s,a)</span> becomes <b>−1</b>.
+      </div>
+      <div class="step">
+        <b>Step 4 — γ = 1.</b><br>
+        So the future-state term is simply 1 × V<sub>k</sub>(s′).
+      </div>
+      <div class="step">
+        <b>Step 5 — At k = 0, every state value was initialised to 0.</b><br>
+        So every successor value V<sub>0</sub>(s′) is currently 0.
+      </div>
+    </div>
+
+
+    <p>Substituting those facts into Bellman gives:</p>
+
+
+    <div class="eq">
+      V<sub>1</sub>(s)
+      =
+      0.25[−1 + 1(0)]
+      + 0.25[−1 + 1(0)]
+      + 0.25[−1 + 1(0)]
+      + 0.25[−1 + 1(0)]
+    </div>
+
+
+    <p>Since 1 × 0 = 0:</p>
+
+
+    <div class="eq">
+      V<sub>1</sub>(s)
+      =
+      0.25(−1)
+      + 0.25(−1)
+      + 0.25(−1)
+      + 0.25(−1)
+      = −1
+    </div>
+
+
+    <div class="callout">
+      <strong>What does this mean?</strong>
+      At the first iteration, the algorithm knows only one thing: whichever direction the random policy chooses,
+      the agent pays an immediate cost of −1. The future still looks like 0 because all state values started at 0.
+      Therefore the first estimate of every non-terminal state is −1.
+    </div>
+
+
+    <h3>2.7 Second update near a terminal state: why is it −1.75?</h3>
+
+
+    <p>
+      Now the algorithm uses the values from <b>k = 1</b>. This is the first time future-state information starts to matter.
+      Consider a state directly beside a terminal state.
+    </p>
+
+
+    <div class="eq">
+      V<sub>2</sub>(s<sub>1</sub>) =
+      0.25(−1+0) + 0.25(−1−1) + 0.25(−1−1) + 0.25(−1−1)
+      = −1.75
+    </div>
+
+
+    <table>
+      <tr><th>Action outcome</th><th>Immediate reward</th><th>Previous successor value</th><th>Contribution</th></tr>
+      <tr><td>Action reaches terminal</td><td>−1</td><td>0</td><td>0.25 × (−1 + 0)</td></tr>
+      <tr><td>Action reaches non-terminal</td><td>−1</td><td>−1</td><td>0.25 × (−1 − 1)</td></tr>
+      <tr><td>Another non-terminal move</td><td>−1</td><td>−1</td><td>0.25 × (−1 − 1)</td></tr>
+      <tr><td>Off-grid / stay in same state</td><td>−1</td><td>−1</td><td>0.25 × (−1 − 1)</td></tr>
+    </table>
+
+
+    <p>
+      The terminal-reaching action is better because after paying the immediate −1, there is no further future cost.
+      The other actions pay −1 now and also move into a state that is already estimated to contain more future cost.
+    </p>
+
+
+    <div class="callout">
+      <strong>This is the key idea of Bellman updates</strong>
+      A state's value is not determined only by its immediate reward. It also depends on the values of the states that can come next.
+      That is how future consequences gradually enter the calculation.
+    </div>
+
+
+    <div class="callout">
+      <strong>How to interpret the negative values</strong>
+      The negative numbers are not “bad scores” in an abstract sense. In this GridWorld, each move costs exactly −1.
+      Therefore the total return is simply the negative of how many moves the agent makes before reaching a terminal state.
+    </div>
+
+
+    <h3>2.6.1 Why does −14 mean roughly 14 expected steps?</h3>
+
+
+    <p>Imagine one complete episode takes exactly 4 moves before the agent reaches a terminal state.</p>
+
+
+    <div class="eq">
+      Return = −1 + (−1) + (−1) + (−1) = −4
+    </div>
+
+
+    <p>If another episode takes 10 moves:</p>
+
+
+    <div class="eq">
+      Return = −1 −1 −1 −1 −1 −1 −1 −1 −1 −1 = −10
+    </div>
+
+
+    <p>
+      So the more steps the agent wastes, the more negative the total reward becomes.
+      Because the policy is random, the agent does not always take the same number of steps.
+      Sometimes it reaches a terminal quickly, and sometimes it wanders around for much longer.
+    </p>
+
+
+    <p>
+      The value function therefore stores an <b>expected</b> return: the average long-term result over many possible random episodes.
+      If a state has
+    </p>
+
+
+    <div class="eq">V<sub>π</sub>(s) ≈ −14</div>
+
+
+    <p>
+      then, because every step contributes −1 and γ=1, the interpretation is:
+      <b>starting from this state and following the random policy costs about 14 steps on average before termination.</b>
+    </p>
+
+
+    <div class="grid2">
+      <div class="card">
+        <h4>State value = −2</h4>
+        <p>Only about 2 units of step-cost are expected from here.</p>
+        <p><b>This is relatively good.</b></p>
+      </div>
+      <div class="card">
+        <h4>State value = −10</h4>
+        <p>About 10 units of step-cost are expected from here.</p>
+        <p><b>This is worse because the agent is expected to take longer.</b></p>
+      </div>
+    </div>
+
+
+    <div class="teacher">
+      Think of the numbers as a travel cost rather than a score. If one route costs $2 and another costs $10, the $2 route is better.
+      Here the “cost” is written as negative reward, so −2 is better than −10 because it represents fewer expected steps.
+    </div>
+
+
+    <h3>2.6.2 Why do states close to a terminal usually have better values?</h3>
+    <p>
+      A state close to a terminal has a chance of ending the episode quickly, so it may avoid many future −1 penalties.
+      A state far away, especially under a random policy, is more likely to accumulate many additional step costs before termination.
+    </p>
+
+
+    <div class="mini-diagram">
+      <div class="node term">Terminal<br><small>V = 0</small></div>
+      <div class="arrow">← fewer expected steps ←</div>
+      <div class="node">near state<br><small>less negative</small></div>
+      <div class="arrow">← more wandering ←</div>
+      <div class="node">far state<br><small>more negative</small></div>
+    </div>
+
+
+
+
+    <h3>2.8 Why can the greedy policy become good before the values fully converge?</h3>
+    <p>
+      To choose an action, we often only need the <b>ranking</b> of the neighbouring options to be correct.
+      The exact values may still move from −2.4 to −3.0 to −6.1, but if the same direction remains better than the alternatives,
+      the greedy action can already be stable.
+    </p>
+    <p>
+      This is why the Sutton &amp; Barto figure can show an optimal-looking arrow policy after only a few iterations,
+      while the numerical value function continues to change for many more sweeps.
+    </p>
+
+
+    <h3>2.9 The GridWorld code</h3>
+<pre><code><span class="code-line">WORLD_SIZE = 4</span>
+<span class="code-line">ACTIONS = [np.array([0, -1]),   # left</span>
+<span class="code-line">           np.array([-1, 0]),   # up</span>
+<span class="code-line">           np.array([0, 1]),    # right</span>
+<span class="code-line">           np.array([1, 0])]    # down</span>
+<span class="code-line">ACTION_PROB = 0.25</span>
+
+
+<span class="code-line hi">for action in ACTIONS:</span>
+<span class="code-line hi">    (next_i, next_j), reward = step([i, j], action)</span>
+<span class="code-line hi">    value += ACTION_PROB * (reward + src[next_i, next_j])</span></code></pre>
+
+
+    <p>The final highlighted line is the Bellman expectation equation in code:</p>
+    <table>
+      <tr><th>Code</th><th>Math</th></tr>
+      <tr><td><span class="inline">ACTION_PROB</span></td><td>π(a|s) = 0.25</td></tr>
+      <tr><td><span class="inline">reward</span></td><td>r = −1</td></tr>
+      <tr><td><span class="inline">src[next_i,next_j]</span></td><td>V(s′)</td></tr>
+      <tr><td><span class="inline">for action in ACTIONS</span></td><td>Σ over actions</td></tr>
+    </table>
+
+
+    <h3>2.10 Synchronous vs in-place updates</h3>
+
+
+    <p>
+      Both methods are trying to calculate the <b>same final value function</b>.
+      The difference is only <b>which version of the values is allowed to be used while one sweep is still running</b>.
+    </p>
+
+
+    <div class="callout">
+      <strong>First, what is one sweep?</strong>
+      A sweep means going through the states and updating their values once.
+      For a 4×4 GridWorld, one complete sweep means attempting to update all 16 states once.
+    </div>
+    <h3>2.10.1 Synchronous update: finish the whole new grid before using it</h3>
+
+
+    <p>
+      In a synchronous update, we keep two separate versions of the value function:
+    </p>
+
+
+    <div class="grid2">
+      <div class="card">
+        <h4>Old values: V<sub>k</sub></h4>
+        <p>These values are fixed for the entire sweep.</p>
+        <p>Every state calculation reads from this old copy.</p>
+      </div>
+      <div class="card">
+        <h4>New values: V<sub>k+1</sub></h4>
+        <p>New answers are written here.</p>
+        <p>They are <b>not used yet</b> while the current sweep is still running.</p>
+      </div>
+    </div>
+
+
+    <div class="mini-diagram">
+      <div class="node">Old grid<br><small>V<sub>k</sub></small></div>
+      <div class="arrow">→ calculate every state →</div>
+      <div class="node action">New grid<br><small>V<sub>k+1</sub></small></div>
+      <div class="arrow">→ after full sweep →</div>
+      <div class="node">Replace old grid</div>
+    </div>
+
+
+    <p>
+      Suppose we are updating states from left to right:
+    </p>
+
+
+    <div class="eq">
+      S<sub>1</sub> → S<sub>2</sub> → S<sub>3</sub>
+    </div>
+
+
+    <p>At the beginning of the sweep, imagine:</p>
+
+
+    <div class="eq">
+      V<sub>k</sub>(S<sub>1</sub>) = 0,&nbsp;
+      V<sub>k</sub>(S<sub>2</sub>) = 0,&nbsp;
+      V<sub>k</sub>(S<sub>3</sub>) = 10
+    </div>
+
+
+    <p>
+      Assume, just for illustration, that each state gets its new value from the state immediately to its right.
+    </p>
+
+
+    <div class="steps">
+      <div class="step">
+        Update S<sub>2</sub>. It looks at the <b>old</b> value of S<sub>3</sub>, which is 10.
+        So the new value of S<sub>2</sub> may become 10.
+      </div>
+      <div class="step">
+        Now update S<sub>1</sub>. Even though we have already calculated a new value of 10 for S<sub>2</sub>,
+        synchronous updating is <b>not allowed to use it yet</b>.
+      </div>
+      <div class="step">
+        S<sub>1</sub> still reads the old value V<sub>k</sub>(S<sub>2</sub>) = 0.
+        So the information from S<sub>3</sub> reaches S<sub>2</sub> in this sweep, but not S<sub>1</sub> until the next sweep.
+      </div>
+    </div>
+
+
+    <div class="teacher">
+      In synchronous updating, everyone in the new class gets their answer using yesterday's notes.
+      Even if one student finishes a better answer early, nobody else is allowed to copy that new answer until the next round.
+    </div>
+
+
+    <h3>2.10.2 In-place update: use a new value as soon as it is available</h3>
+
+
+    <p>
+      In-place updating usually keeps one main value structure.
+      As soon as a state's new value is calculated, it replaces the old value immediately.
+    </p>
+
+
+    <div class="mini-diagram">
+      <div class="node">Current values</div>
+      <div class="arrow">→ update S<sub>1</sub> →</div>
+      <div class="node action">overwrite S<sub>1</sub></div>
+      <div class="arrow">→ next state can use it →</div>
+      <div class="node">continue</div>
+    </div>
+
+
+    <p>Using the same three-state idea:</p>
+
+
+    <div class="eq">
+      S<sub>1</sub> → S<sub>2</sub> → S<sub>3</sub>, &nbsp;&nbsp;
+      values initially = [0, 0, 10]
+    </div>
+
+
+    <div class="steps">
+      <div class="step">
+        Update S<sub>2</sub> using S<sub>3</sub> = 10. S<sub>2</sub> becomes 10.
+      </div>
+      <div class="step">
+        Because this is in-place, the stored value of S<sub>2</sub> is immediately changed from 0 to 10.
+      </div>
+      <div class="step">
+        When S<sub>1</sub> is updated later in the same sweep, it can now read the <b>new</b> S<sub>2</sub> = 10.
+      </div>
+      <div class="step">
+        Information has therefore travelled through more than one state during a single sweep.
+      </div>
+    </div>
+
+
+    <div class="callout">
+      <strong>Why can in-place converge faster?</strong>
+      New information does not have to wait for the next complete sweep before it can influence another state.
+      A useful value discovered early in the sweep can immediately help later updates.
+    </div>
+
+
+    <h3>2.10.3 Side-by-side numerical illustration</h3>
+
+
+    <table>
+      <tr>
+        <th>Moment</th>
+        <th>Synchronous</th>
+        <th>In-place</th>
+      </tr>
+      <tr>
+        <td>Start of sweep</td>
+        <td>[0, 0, 10]</td>
+        <td>[0, 0, 10]</td>
+      </tr>
+      <tr>
+        <td>After updating S₂</td>
+        <td>Old copy still [0, 0, 10]<br>New copy contains S₂ = 10</td>
+        <td>Main values become [0, 10, 10]</td>
+      </tr>
+      <tr>
+        <td>When updating S₁</td>
+        <td>Reads old S₂ = 0</td>
+        <td>Can read new S₂ = 10</td>
+      </tr>
+      <tr>
+        <td>Effect</td>
+        <td>Information moves roughly one layer per sweep</td>
+        <td>Information can travel farther within the same sweep</td>
+      </tr>
+    </table>
+
+
+    <h3>2.10.4 How this appears in the GridWorld code</h3>
+
+
+<pre><code><span class="code-line">new_state_values = np.zeros((WORLD_SIZE, WORLD_SIZE))</span>
+
+
+<span class="code-line">for i in range(WORLD_SIZE):</span>
+<span class="code-line">    for j in range(WORLD_SIZE):</span>
+
+
+<span class="code-line hi">        src = new_state_values if in_place else state_values</span>
+
+
+<span class="code-line">        value = 0</span>
+<span class="code-line">        for action in ACTIONS:</span>
+<span class="code-line">            (next_i, next_j), reward = step([i, j], action)</span>
+<span class="code-line">            value += ACTION_PROB * (reward + src[next_i, next_j])</span>
+
+
+<span class="code-line">        new_state_values[i, j] = value</span></code></pre>
+
+
+    <table>
+      <tr><th>Code choice</th><th>What it means</th></tr>
+      <tr>
+        <td><span class="inline">src = state_values</span></td>
+        <td>
+          <b>Synchronous.</b> Always read successor values from the previous completed sweep.
+        </td>
+      </tr>
+      <tr>
+        <td><span class="inline">src = new_state_values</span></td>
+        <td>
+          <b>In-place.</b> Read from the structure that is currently being updated, so some successor states may already contain fresh values.
+        </td>
+      </tr>
+    </table>
+
+
+    <h3>2.10.5 Is in-place always “better”?</h3>
+
+
+    <p>
+      Not necessarily. Both approaches are valid and, for this Dynamic Programming problem, both converge to the same solution.
+      They mainly differ in update timing, memory use, and often convergence speed.
+    </p>
+
+
+    <div class="grid2">
+      <div class="card">
+        <h4>Synchronous</h4>
+        <p><b>Easy to reason about:</b> V<sub>k+1</sub> is calculated entirely from V<sub>k</sub>.</p>
+        <p><b>Uses separate old/new values.</b></p>
+        <p>Useful when we want the mathematical iterations to correspond very clearly to k, k+1, k+2...</p>
+      </div>
+      <div class="card">
+        <h4>In-place</h4>
+        <p><b>Reuses fresh information immediately.</b></p>
+        <p><b>Can require less separate storage.</b></p>
+        <p>Often reaches the same converged values in fewer sweeps.</p>
+      </div>
+    </div>
+
+
+    <div class="callout">
+      <strong>The one distinction to remember</strong>
+      <b>Synchronous:</b> “During this sweep, only read old values.”<br>
+      <b>In-place:</b> “If a newer value already exists, you are allowed to use it now.”
+    </div>
+  </section>
+
+
+  <!-- POLICY -->
+  <section class="section" id="policy">
+    <div class="nb-label"><b>43008-Week5-MDPs-ValueIteration-Solution(1).ipynb</b> · Policy Iteration section</div>
+    <h2>3. From evaluation to Policy Iteration</h2>
+    <p class="subhead">Evaluation tells us how good a policy is. Improvement uses those values to make the policy better.</p>
+
+
+    <h3>3.1 Policy Improvement</h3>
+    <div class="eq big">
+      π<sub>new</sub>(s) =
+      argmax<sub>a</sub>
+      [R(s,a) + γΣ<sub>s′</sub>P(s′|s,a)V(s′)]
+    </div>
+
+
+    <div class="grid2">
+      <div class="card">
+        <h4>max</h4>
+        <p>Returns the <b>largest numerical value</b>.</p>
+        <p>Example: max([4.2, 7.9, 3.1]) = 7.9</p>
+      </div>
+      <div class="card">
+        <h4>argmax</h4>
+        <p>Returns the <b>action/index that produced</b> the largest value.</p>
+        <p>If RIGHT produced 7.9, argmax returns RIGHT.</p>
+      </div>
+    </div>
+
+
+
+
+    <h3>3.1.1 Why do we need an improvement step?</h3>
+    <p>
+      Policy Evaluation is deliberately passive: it measures the policy we already have.
+      Once those values are available, we can ask a new question: <b>if another action gives a larger expected return, why keep the old one?</b>
+    </p>
+    <div class="mini-diagram">
+      <div class="node">Current policy</div>
+      <div class="arrow">→ evaluate →</div>
+      <div class="node">Vπ</div>
+      <div class="arrow">→ compare actions →</div>
+      <div class="node action">Better policy</div>
+    </div>
+
+
+    <h3>3.2 Policy Iteration loop</h3>
+    <div class="flow">
+      <span>Choose initial policy π</span><b class="arrow">→</b>
+      <span>Evaluate π</span><b class="arrow">→</b>
+      <span>Get Vπ</span><b class="arrow">→</b>
+      <span>Greedily improve π</span><b class="arrow">→</b>
+      <span>Repeat until stable</span>
+    </div>
+
+
+    <h3>3.3 Policy evaluation in the supplied custom-MDP code</h3>
+<pre><code><span class="code-line">action = policy[state]</span>
+<span class="code-line">state_value = 0</span>
+
+
+<span class="code-line">for next_state in states:</span>
+<span class="code-line">    transition_prob = transition_probs[state][action][next_state]</span>
+<span class="code-line">    reward = rewards[state][action]</span>
+<span class="code-line hi">    state_value += transition_prob * (reward + gamma * V[next_state])</span></code></pre>
+    <p>
+      This particular implementation stores a <b>deterministic policy</b>, so <span class="inline">policy[state]</span> gives one action directly.
+      The fully general Bellman expectation equation can also represent stochastic policies using Σ<sub>a</sub>π(a|s).
+    </p>
+
+
+    <h3>3.4 Policy improvement code</h3>
+<pre><code><span class="code-line">best_action = None</span>
+<span class="code-line">best_value = float('-inf')</span>
+
+
+<span class="code-line">for action in actions[state]:</span>
+<span class="code-line">    action_value = ...</span>
+<span class="code-line hi">    if action_value &gt; best_value:</span>
+<span class="code-line hi">        best_value = action_value</span>
+<span class="code-line hi">        best_action = action</span>
+
+
+<span class="code-line">new_policy[state] = best_action</span></code></pre>
+
+
+    <div class="teacher">
+      “Policy evaluation does not ask whether the policy is smart. It simply measures it. Policy improvement is the moment we finally ask: could another action do better?”
+    </div>
+
+
+
+
+    <h3>3.4.1 Important Policy Iteration code snippets</h3>
+
+
+    <p>
+      The full Policy Iteration algorithm is easier to understand if we separate the code into four small jobs.
+    </p>
+
+
+    <h4>A. Start with any policy</h4>
+<pre><code><span class="code-line">policy = {state: actions[state][0] for state in states}</span></code></pre>
+    <p>
+      At the beginning we do not know the optimal policy, so the notebook simply chooses the first available action for every state.
+      This starting policy does not need to be good. It only gives the algorithm something to evaluate and improve.
+    </p>
+
+
+    <h4>B. Evaluate the current policy</h4>
+<pre><code><span class="code-line hi">V = policy_evaluation(</span>
+<span class="code-line hi">    policy, transition_probs, rewards, gamma, theta, states</span>
+<span class="code-line hi">)</span></code></pre>
+    <p>
+      This asks: <b>“If I keep following the policy I currently have, how valuable is every state?”</b>
+      The result is the value function <span class="inline">V</span>.
+    </p>
+
+
+    <h4>C. Improve the policy</h4>
+<pre><code><span class="code-line hi">new_policy = policy_improvement(</span>
+<span class="code-line hi">    V, transition_probs, rewards, actions, gamma, states</span>
+<span class="code-line hi">)</span></code></pre>
+    <p>
+      Now that the state values are known, the algorithm checks every available action and chooses the greedy action with the highest expected return.
+    </p>
+
+
+    <h4>D. Stop when improvement changes nothing</h4>
+<pre><code><span class="code-line hi">if new_policy == policy:</span>
+<span class="code-line hi">    break</span>
+
+
+<span class="code-line">policy = new_policy</span></code></pre>
+    <p>
+      If the improved policy is identical to the old one, there is nothing left to improve. Otherwise, the improved policy becomes the policy for the next round.
+    </p>
+
+
+    <h4>The complete Policy Iteration skeleton</h4>
+<pre><code><span class="code-line">policy = {state: actions[state][0] for state in states}</span>
+
+
+<span class="code-line">while True:</span>
+<span class="code-line hi">    V = policy_evaluation(...)</span>
+<span class="code-line hi">    new_policy = policy_improvement(V, ...)</span>
+
+
+<span class="code-line hi">    if new_policy == policy:</span>
+<span class="code-line hi">        break</span>
+
+
+<span class="code-line">    policy = new_policy</span>
+
+
+<span class="code-line">return V, policy</span></code></pre>
+
+
+    <div class="takeaway">
+      <h4>Policy Iteration: concept to leave with</h4>
+      <div class="bigline">Start with a policy → find out how good it is → make it better → repeat.</div>
+      <p>
+        The algorithm keeps the <b>policy</b> at the centre of the process.
+        It repeatedly asks two questions:
+        <b>“How good is my current behaviour?”</b> and then
+        <b>“Can I choose better actions?”</b>
+      </p>
+      <div class="flow">
+        <span>Policy π</span><b class="arrow">→</b>
+        <span>Evaluate</span><b class="arrow">→</b>
+        <span>Vπ</span><b class="arrow">→</b>
+        <span>Improve</span><b class="arrow">→</b>
+        <span>better π</span>
+      </div>
+    </div>
+
+
+    <h3>3.5 Why policy stability means we can stop</h3>
+    <p>If a greedy improvement step cannot change any action, the current policy is already greedy with respect to its own evaluated values.</p>
+<pre><code>if new_policy == policy:
+    break</code></pre>
+  </section>
+
+
+  <!-- VALUE ITERATION -->
+  <section class="section" id="value">
+    <div class="nb-label"><b>43008-Week5-MDPs-ValueIteration-Solution(1).ipynb</b> + <b>43008-Week5-MDPs-ValueIteration(1).ipynb</b></div>
+    <h2>4. Value Iteration: the central Week 5 algorithm</h2>
+    <p class="subhead">Value Iteration replaces the policy-weighted action average with an immediate best-action choice.</p>
+
+
+    <h3>4.1 Expectation vs optimality</h3>
+    <div class="grid2">
+      <div class="card">
+        <h4>Policy Evaluation</h4>
+        <div class="eq">Σ<sub>a</sub> π(a|s) [ ... ]</div>
+        <p>Average actions according to a given policy.</p>
+      </div>
+      <div class="card">
+        <h4>Value Iteration</h4>
+        <div class="eq">max<sub>a</sub> [ ... ]</div>
+        <p>Keep the action with the largest expected return.</p>
+      </div>
+    </div>
+
+
+
+
+    <h3>4.1.1 Why does Value Iteration use max instead of π?</h3>
+    <p>
+      A fixed policy answers “what will I do?” Value Iteration is solving a control problem, so it asks “what <b>should</b> I do?”
+      It does not average good and bad actions together. It keeps the action whose expected return is largest.
+    </p>
+
+
+    <div class="compare-line">
+      <div class="side">
+        <b>Policy Evaluation</b><br>
+        LEFT 25% + RIGHT 25% + UP 25% + DOWN 25%<br>
+        <small>All actions matter because the policy may choose all of them.</small>
+      </div>
+      <div class="mid">→</div>
+      <div class="side">
+        <b>Value Iteration</b><br>
+        calculate LEFT, RIGHT, UP, DOWN → keep the best<br>
+        <small>Only the maximum determines V*(s).</small>
+      </div>
+    </div>
+
+
+    <h3>4.2 Bellman Optimality update</h3>
+    <div class="eq big">
+      V<sub>k+1</sub>(s) =
+      max<sub>a</sub>
+      [ R(s,a) + γ Σ<sub>s′</sub> P(s′|s,a)V<sub>k</sub>(s′) ]
+    </div>
+    <div class="teacher">
+      “For this state: try every action. For each action, compute immediate reward plus discounted expected future value. Keep the largest result. Then repeat for every state until the values barely change.”
+    </div>
+
+
+    <h3>4.3 Function 1: <span class="inline">compute_state_value</span></h3>
+<pre><code><span class="code-line">def compute_state_value(state, V, transition_probs, rewards, actions, gamma, states):</span>
+<span class="code-line">    expected_values = []</span>
+<span class="code-line"></span>
+<span class="code-line hi">    for action in actions[state]:</span>
+<span class="code-line">        action_value = 0</span>
+<span class="code-line"></span>
+<span class="code-line hi">        for next_state in states:</span>
+<span class="code-line">            transition_prob = transition_probs[state][action][next_state]</span>
+<span class="code-line">            immediate_reward = rewards[state][action]</span>
+<span class="code-line hi">            action_value += transition_prob * (</span>
+<span class="code-line hi">                immediate_reward + gamma * V[next_state]</span>
+<span class="code-line hi">            )</span>
+<span class="code-line"></span>
+<span class="code-line">        expected_values.append(action_value)</span>
+<span class="code-line"></span>
+<span class="code-line hi">    return max(expected_values)</span></code></pre>
+
+
+    <table>
+      <tr><th>Python</th><th>Bellman role</th><th>Meaning</th></tr>
+      <tr><td><span class="inline">for action...</span></td><td>Try all a</td><td>Consider every possible choice</td></tr>
+      <tr><td><span class="inline">for next_state...</span></td><td>Σ<sub>s′</sub></td><td>Average over possible outcomes</td></tr>
+      <tr><td><span class="inline">transition_prob</span></td><td>P(s′|s,a)</td><td>How likely is this outcome?</td></tr>
+      <tr><td><span class="inline">immediate_reward</span></td><td>R(s,a)</td><td>Reward now</td></tr>
+      <tr><td><span class="inline">gamma * V[next_state]</span></td><td>γV(s′)</td><td>Discounted value later</td></tr>
+      <tr><td><span class="inline">max(expected_values)</span></td><td>max<sub>a</sub></td><td>Keep the best action value</td></tr>
+    </table>
+
+
+
+
+    <h3>4.3.1 Why are there two nested loops?</h3>
+    <div class="why-list">
+      <div class="why-card">
+        <b>Outer loop: actions</b>
+        We need to compare the choices available to the agent.
+      </div>
+      <div class="why-card">
+        <b>Inner loop: next states</b>
+        One chosen action may still have several possible environmental outcomes.
+      </div>
+    </div>
+    <p>
+      So the logic is: <b>for each action, average over that action's possible outcomes; then compare the completed action values.</b>
+    </p>
+
+
+    <h3>4.4 Why there is a loop over next states</h3>
+    <p>If an action can produce multiple outcomes, its value is an expectation.</p>
+    <div class="eq">
+      Q(s,a) = 0.8[R + γV(B)] + 0.2[R + γV(C)]
+    </div>
+    <p>The inner <span class="inline">for next_state in states</span> loop performs this weighted sum.</p>
+
+
+    <h3>4.5 Function 2: <span class="inline">extract_policy</span></h3>
+    <p>Once the values have converged, we need the action that produced the best value.</p>
+<pre><code><span class="code-line">best_action_value = float('-inf')</span>
+<span class="code-line">best_action = None</span>
+
+
+<span class="code-line">for action in actions[state]:</span>
+<span class="code-line">    action_value = ...</span>
+<span class="code-line hi">    if action_value &gt; best_action_value:</span>
+<span class="code-line hi">        best_action_value = action_value</span>
+<span class="code-line hi">        best_action = action</span>
+
+
+<span class="code-line">policy[state] = best_action</span></code></pre>
+    <p><span class="inline">compute_state_value</span> performs a <b>max</b>. <span class="inline">extract_policy</span> effectively performs an <b>argmax</b>.</p>
+
+
+
+
+    <h3>4.5.1 Why not store the policy during every Value Iteration sweep?</h3>
+    <p>
+      The central target of Value Iteration is the optimal value function V*. During early sweeps, the values are still changing,
+      so the temporary best action can also change. Once the values have converged sufficiently, a final greedy pass cleanly extracts π*.
+    </p>
+    <div class="flow">
+      <span>Estimate V</span><b class="arrow">→</b>
+      <span>Improve estimates repeatedly</span><b class="arrow">→</b>
+      <span>V ≈ V*</span><b class="arrow">→</b>
+      <span>argmax each state</span><b class="arrow">→</b>
+      <span>π*</span>
+    </div>
+
+
+    <h3>4.6 Function 3: the Value Iteration loop</h3>
+<pre><code><span class="code-line">V = {state: 0 for state in states}</span>
+
+
+<span class="code-line">while True:</span>
+<span class="code-line">    new_V = V.copy()</span>
+<span class="code-line">    delta = 0</span>
+
+
+<span class="code-line">    for state in states:</span>
+<span class="code-line hi">        new_V[state] = compute_state_value(...)</span>
+<span class="code-line hi">        delta = max(delta, abs(new_V[state] - V[state]))</span>
+
+
+<span class="code-line hi">    if delta &lt; theta:</span>
+<span class="code-line">        break</span>
+
+
+<span class="code-line">    V = new_V</span></code></pre>
+
+
+    <h3>4.7 What are delta and theta?</h3>
+    <div class="grid2">
+      <div class="card">
+        <h4>δ — observed change</h4>
+        <p>The largest absolute value change anywhere in the state space during the current sweep.</p>
+        <div class="eq">δ = max<sub>s</sub>|V<sub>new</sub>(s) − V<sub>old</sub>(s)|</div>
+      </div>
+      <div class="card">
+        <h4>θ — tolerance</h4>
+        <p>A small threshold chosen by us. The notebook uses 1e−3 = 0.001 by default.</p>
+        <div class="eq">stop when δ &lt; θ</div>
+      </div>
+    </div>
+
+
+
+
+    <h3>4.7.1 Why does γ matter?</h3>
+    <div class="grid3">
+      <div class="card">
+        <h4>γ = 0</h4>
+        <p>Only immediate reward matters.</p>
+      </div>
+      <div class="card">
+        <h4>0 &lt; γ &lt; 1</h4>
+        <p>Future reward matters, but farther rewards are progressively discounted.</p>
+      </div>
+      <div class="card">
+        <h4>γ ≈ 1</h4>
+        <p>Long-term consequences remain very important.</p>
+      </div>
+    </div>
+    <p>
+      Example: with γ=0.9, a reward received 5 steps from now is weighted by 0.9⁵.
+      This is why the same immediate reward can lead to different action values depending on what lies beyond the next state.
+    </p>
+
+
+
+
+    <h3>4.7.2 Important Value Iteration code snippets</h3>
+
+
+    <p>
+      Value Iteration is built from three main pieces in the notebook:
+      <b>compute one state's best value</b>, <b>repeat that for all states until convergence</b>,
+      and then <b>extract the best action as the policy</b>.
+    </p>
+
+
+    <h4>A. Initialise state values</h4>
+<pre><code><span class="code-line">V = {state: 0 for state in states}</span></code></pre>
+    <p>
+      We need a starting estimate. Zero is convenient; the Bellman updates will repeatedly correct it.
+    </p>
+
+
+    <h4>B. Evaluate every possible action for one state</h4>
+<pre><code><span class="code-line">expected_values = []</span>
+
+
+<span class="code-line hi">for action in actions[state]:</span>
+<span class="code-line">    action_value = 0</span>
+
+
+<span class="code-line hi">    for next_state in states:</span>
+<span class="code-line">        transition_prob = transition_probs[state][action][next_state]</span>
+<span class="code-line">        immediate_reward = rewards[state][action]</span>
+
+
+<span class="code-line hi">        action_value += transition_prob * (</span>
+<span class="code-line hi">            immediate_reward + gamma * V[next_state]</span>
+<span class="code-line hi">        )</span>
+
+
+<span class="code-line">    expected_values.append(action_value)</span>
+
+
+<span class="code-line hi">return max(expected_values)</span></code></pre>
+
+
+    <div class="code-purpose">
+      <b>Outer action loop</b>
+      <span>Try every action the agent can choose in this state.</span>
+    </div>
+    <div class="code-purpose">
+      <b>Inner next-state loop</b>
+      <span>For one selected action, average all possible outcomes using their transition probabilities.</span>
+    </div>
+    <div class="code-purpose">
+      <b><span class="inline">max(...)</span></b>
+      <span>Keep the best action value. This is the Bellman <b>optimality</b> idea.</span>
+    </div>
+
+
+    <h4>C. Update every state's value</h4>
+<pre><code><span class="code-line">while True:</span>
+<span class="code-line">    new_V = V.copy()</span>
+<span class="code-line">    delta = 0</span>
+
+
+<span class="code-line">    for state in states:</span>
+<span class="code-line hi">        new_V[state] = compute_state_value(</span>
+<span class="code-line hi">            state, V, transition_probs, rewards, actions, gamma, states</span>
+<span class="code-line hi">        )</span>
+
+
+<span class="code-line hi">        delta = max(</span>
+<span class="code-line hi">            delta, abs(new_V[state] - V[state])</span>
+<span class="code-line hi">        )</span></code></pre>
+
+
+    <p>
+      One complete pass through <span class="inline">for state in states</span> is one sweep.
+      <span class="inline">delta</span> records the largest change produced during that sweep.
+    </p>
+
+
+    <h4>D. Convergence check</h4>
+<pre><code><span class="code-line hi">if delta &lt; theta:</span>
+<span class="code-line hi">    break</span>
+
+
+<span class="code-line">V = new_V</span></code></pre>
+    <p>
+      Once the values are barely changing, we treat the value function as converged.
+    </p>
+
+
+    <h4>E. Extract the final policy</h4>
+<pre><code><span class="code-line hi">policy = extract_policy(</span>
+<span class="code-line hi">    V, transition_probs, rewards, actions, gamma, states</span>
+<span class="code-line hi">)</span>
+
+
+<span class="code-line">return V, policy</span></code></pre>
+    <p>
+      Value Iteration first concentrates on finding the best value of every state.
+      After the values stabilise, <span class="inline">extract_policy</span> chooses the action that achieves that best value.
+    </p>
+
+
+    <div class="takeaway">
+      <h4>Value Iteration: concept to leave with</h4>
+      <div class="bigline">For every state, try every action → calculate what each action is worth → keep the best value → repeat until stable.</div>
+      <p>
+        Value Iteration keeps the <b>value function</b> at the centre.
+        It does not repeatedly fully evaluate a current policy first.
+        Instead, every Bellman update already behaves optimally by using <b>max over actions</b>.
+      </p>
+      <div class="flow">
+        <span>Current V</span><b class="arrow">→</b>
+        <span>try all actions</span><b class="arrow">→</b>
+        <span>max</span><b class="arrow">→</b>
+        <span>new V</span><b class="arrow">→</b>
+        <span>repeat</span><b class="arrow">→</b>
+        <span>extract π*</span>
+      </div>
+    </div>
+
+
+    <h3>4.8 Interactive Bellman playground</h3>
+    <p>
+      Change successor values and see the difference between a random-policy evaluation
+      (average the actions) and Value Iteration (take the maximum).
+    </p>
+    <div class="playground">
+      <div>
+        <div class="inputs">
+          <label>γ<input id="pgGamma" type="number" step="0.1" value="0.9"></label>
+          <label>Immediate reward R<input id="pgReward" type="number" step="1" value="-1"></label>
+          <label>LEFT successor V<input id="pgL" type="number" step="0.1" value="0"></label>
+          <label>RIGHT successor V<input id="pgR" type="number" step="0.1" value="-2"></label>
+          <label>UP successor V<input id="pgU" type="number" step="0.1" value="-1"></label>
+          <label>DOWN successor V<input id="pgD" type="number" step="0.1" value="-3"></label>
+        </div>
+        <button class="ctrl" style="margin-top:12px" onclick="calcBellman()">Recalculate</button>
+      </div>
+      <div class="result" id="bellmanResult"></div>
+    </div>
+
+
+    <div class="deep">
+      <h3>4.9 Advanced implementation note</h3>
+      <details>
+        <summary>Convergence detail in the supplied custom-MDP solution</summary>
+        <div>
+          In the custom <span class="inline">policy_evaluation</span> function, <span class="inline">delta = 0</span> is placed inside the state loop.
+          Conceptually, the textbook convergence check normally resets delta once per full sweep and then takes the maximum change over all states.
+          The Gymnasium version follows that sweep-wide pattern. This is an implementation detail worth knowing if students inspect the functions very closely.
+        </div>
+      </details>
+    </div>
+  </section>
+
+
+  <!-- DRONE -->
+  <section class="section" id="drone">
+    <div class="nb-label"><b>43008-Week5-MDPs-ValueIteration-Solution(1).ipynb</b> + <b>43008-Week5-MDPs-ValueIteration(1).ipynb</b> · Efficient Package Delivery with Drones</div>
+    <h2>5. Custom Drone MDP</h2>
+    <p class="subhead">This section shows that the algorithms are general: once an MDP is represented as P and R, the same solver can be reused.</p>
+
+
+    <h3>5.1 States and transitions</h3>
+<pre><code>states = ['W', 'A', 'B', 'C']
+
+
+transition_matrix = [
+    [0, 1, 0, 0],  # W
+    [0, 0, 1, 0],  # A
+    [0, 0, 0, 1],  # B
+    [1, 0, 0, 0]   # C
+]</code></pre>
+    <div class="flow">
+      <span>W</span><b class="arrow">→</b>
+      <span>A</span><b class="arrow">→</b>
+      <span>B</span><b class="arrow">→</b>
+      <span>C</span><b class="arrow">→</b>
+      <span>W</span>
+    </div>
+
+
+    <h3>5.2 Reward matrix intuition</h3>
+<pre><code>[
+    [ 0, 10, -4, -6],  # W
+    [-2,  0, 10, -3],  # A
+    [-3, -1,  0, 10],  # B
+    [10, -3, -2,  0]   # C
+]</code></pre>
+    <p>The highest immediate reward in each state is +10, producing the preferred action sequence:</p>
+    <div class="flow">
+      <span>W → Fly_A</span><span>A → Fly_B</span><span>B → Fly_C</span><span>C → Fly_W</span>
+    </div>
+
+
+    <h3>5.3 Why the optimal values approach 100</h3>
+    <p>If the optimal cycle gives +10 every step and γ=0.9:</p>
+    <div class="eq big">
+      V = 10 + 0.9(10) + 0.9²(10) + … = 10 / (1 − 0.9) = 100
+    </div>
+    <p>The algorithm gets very close to 100 and stops when the remaining change falls below θ.</p>
+
+
+    <h3>5.4 Read the debug output conceptually</h3>
+    <div class="steps">
+      <div class="step">
+        <b>Iteration 1:</b> the state can see roughly one immediate +10 reward.
+      </div>
+      <div class="step">
+        <b>Iteration 2:</b> 10 + 0.9×10 = 19.
+      </div>
+      <div class="step">
+        <b>Iteration 3:</b> 10 + 0.9×19 = 27.1.
+      </div>
+      <div class="step">
+        More and more future rewards are backed up until the values stabilise close to 100.
+      </div>
+    </div>
+
+
+    <h3>5.5 Why “average reward” may print around 1000</h3>
+    <p>
+      The simulation can run 100 steps. If the chosen policy receives +10 on every step, an episode accumulates
+      100 × 10 = 1000. The supplied helper then averages that <b>episode return</b> across episodes.
+    </p>
+
+
+    <div class="deep">
+      <h3>5.6 Advanced source-code reading note</h3>
+      <details>
+        <summary>How the supplied transition conversion behaves</summary>
+        <div>
+          In the custom conversion code, the transition probability is taken from the current state's transition-matrix row,
+          while the action index is not used to choose a different transition row. In this teaching implementation,
+          the state-transition cycle is therefore effectively fixed by the current state, while different actions mainly differ through reward.
+          A fully general MDP representation can instead make P(s′|s,a) vary with both state and action.
+        </div>
+      </details>
+    </div>
+  </section>
+
+
+  <!-- GYM -->
+  <section class="section" id="gym">
+    <div class="nb-label"><b>43008-Week5-SolvingMDPs-GYMNASIUM(1).ipynb</b></div>
+    <h2>6. Gymnasium: FrozenLake</h2>
+    <p class="subhead">Nothing fundamental changes. Gymnasium simply stores the environment model for us.</p>
+
+
+    <h3>6.1 Environment setup</h3>
+<pre><code>env = gym.make(
+    'FrozenLake-v1',
+    desc=None,
+    map_name="4x4",
+    is_slippery=False,
+    render_mode='rgb_array'
+)</code></pre>
+
+
+    <table>
+      <tr><th>Item</th><th>FrozenLake</th></tr>
+      <tr><td>Observation/state space</td><td>16 states for a 4×4 map</td></tr>
+      <tr><td>Action space</td><td>4 discrete actions</td></tr>
+      <tr><td>0 / 1 / 2 / 3</td><td>LEFT / DOWN / RIGHT / UP</td></tr>
+      <tr><td><span class="inline">is_slippery=False</span></td><td>Chosen movement is deterministic rather than slippery/stochastic</td></tr>
+    </table>
+
+
+
+
+    <h3>6.1.1 Why use Gymnasium after the custom MDP?</h3>
+    <p>
+      In the custom notebook, we manually build states, actions, rewards, and transition probabilities.
+      Gymnasium gives us an environment where those dynamics are already encoded.
+      This lets us verify that the same Dynamic Programming logic is not tied to the drone example or GridWorld.
+    </p>
+    <div class="compare-line">
+      <div class="side">
+        <b>Custom MDP notebook</b><br>
+        We create P and R ourselves.
+      </div>
+      <div class="mid">same algorithm</div>
+      <div class="side">
+        <b>Gymnasium FrozenLake</b><br>
+        The environment provides P and R.
+      </div>
+    </div>
+
+
+    <h3>6.2 Where is P(s′|s,a)?</h3>
+<pre><code>env.unwrapped.P[state][action]</code></pre>
+    <p>Gymnasium returns one or more transition outcomes. Each outcome contains:</p>
+<pre><code>(probability, next_state, reward, done)</code></pre>
+
+
+    <h3>6.3 Bellman optimality in the Gymnasium code</h3>
+<pre><code><span class="code-line">for action in range(env.action_space.n):</span>
+<span class="code-line">    action_value = 0</span>
+<span class="code-line"></span>
+<span class="code-line hi">    for probability, next_state, reward, done in env.unwrapped.P[state][action]:</span>
+<span class="code-line hi">        action_value += probability * (reward + gamma * V[next_state])</span>
+<span class="code-line"></span>
+<span class="code-line">    expected_values.append(action_value)</span>
+
+
+<span class="code-line hi">return max(expected_values)</span></code></pre>
+    <div class="callout">
+      <strong>Core connection</strong>
+      The algorithm is the same as the custom MDP notebook. Only the source of transition probabilities and rewards has changed:
+      we now read them from <span class="inline">env.unwrapped.P</span>.
+    </div>
+
+
+    <h3>6.4 Why values seem to spread backward from the goal</h3>
+    <p>
+      The algorithm is not literally performing a reverse graph search. Instead, reward information propagates through repeated Bellman backups.
+      A state next to the goal becomes valuable first; on the next sweep, states that can reach that state become valuable; then the next layer, and so on.
+    </p>
+
+
+
+
+    <h3>6.4.1 Deterministic vs stochastic FrozenLake</h3>
+    <div class="grid2">
+      <div class="card">
+        <h4>is_slippery = False</h4>
+        <p>If RIGHT is selected, the intended movement occurs deterministically unless blocked/terminated by the environment structure.</p>
+      </div>
+      <div class="card">
+        <h4>is_slippery = True</h4>
+        <p>The same selected action can produce more than one possible next state, each with its own probability.</p>
+      </div>
+    </div>
+    <h3>6.5 What changes when <span class="inline">is_slippery=True</span>?</h3>
+    <p>An intended action can have multiple next-state outcomes, so the inner probability-weighted sum becomes genuinely important.</p>
+    <div class="eq">
+      Q(s,a) = Σ<sub>s′</sub> P(s′|s,a)[r + γV(s′)]
+    </div>
+    <p>The code already supports this because it loops through every outcome returned for a state-action pair.</p>
+
+
+    <h3>6.6 Simulation after planning</h3>
+<pre><code>action = p[state]
+state, reward, terminated, truncated, info = recorder.step(action)
+done = terminated or truncated</code></pre>
+    <p>
+      Value/Policy Iteration first <b>plans</b> a policy from the known MDP model.
+      The simulation then <b>executes</b> that policy in the environment.
+    </p>
+
+
+    <div class="teacher">
+      “The solver and the simulator are doing different jobs. The solver decides what should be done. The simulator shows what happens when the agent actually follows that decision.”
+    </div>
+  </section>
+
+
+  <!-- COMPARE -->
+  <section class="section" id="compare">
+    <div class="nb-label"><b>Recap</b> · Tie every notebook together</div>
+    <h2>7. Compare the algorithms</h2>
+
+
+    <table>
+      <tr>
+        <th>Algorithm</th><th>Given policy?</th><th>Bellman idea</th><th>Output</th><th>Main stop condition</th>
+      </tr>
+      <tr>
+        <td><b>Policy Evaluation</b></td>
+        <td>Yes</td>
+        <td>Average according to π</td>
+        <td>V<sub>π</sub></td>
+        <td>Values change by &lt; θ</td>
+      </tr>
+      <tr>
+        <td><b>Policy Improvement</b></td>
+        <td>Uses current V</td>
+        <td>argmax over actions</td>
+        <td>Improved policy</td>
+        <td>One greedy sweep</td>
+      </tr>
+      <tr>
+        <td><b>Policy Iteration</b></td>
+        <td>Starts with one</td>
+        <td>Evaluate → improve</td>
+        <td>V* and π*</td>
+        <td>Policy stops changing</td>
+      </tr>
+      <tr>
+        <td><b>Value Iteration</b></td>
+        <td>No fixed policy needed</td>
+        <td>max inside every value backup</td>
+        <td>V*, then π*</td>
+        <td>Values change by &lt; θ</td>
+      </tr>
+    </table>
+
+
+    <h3>7.1 Code ↔ mathematics cheat sheet</h3>
+    <table>
+      <tr><th>Math</th><th>Python idea</th></tr>
+      <tr><td>s</td><td><span class="inline">state</span></td></tr>
+      <tr><td>a</td><td><span class="inline">action</span></td></tr>
+      <tr><td>s′</td><td><span class="inline">next_state</span></td></tr>      <tr><td>P(s′|s,a)</td><td><span class="inline">transition_prob</span> / Gymnasium transition tuple</td></tr>
+      <tr><td>R(s,a)</td><td><span class="inline">reward</span> or <span class="inline">immediate_reward</span></td></tr>
+      <tr><td>γV(s′)</td><td><span class="inline">gamma * V[next_state]</span></td></tr>
+      <tr><td>Σ<sub>s′</sub></td><td>loop + <span class="inline">+=</span></td></tr>
+      <tr><td>max<sub>a</sub></td><td><span class="inline">max(expected_values)</span></td></tr>
+      <tr><td>argmax<sub>a</sub></td><td>track <span class="inline">best_action</span></td></tr>
+      <tr><td>V<sub>k+1</sub></td><td><span class="inline">new_V</span></td></tr>
+      <tr><td>convergence</td><td><span class="inline">delta &lt; theta</span></td></tr>
+    </table>
+
+
+
+
+    <h3>7.1.1 Important code after the algorithms are built</h3>
+
+
+    <h4>Run both algorithms</h4>
+<pre><code><span class="code-line">PI_values, PI_policy = policy_iteration(</span>
+<span class="code-line">    states, actions, transition_probs, rewards, gamma, theta</span>
+<span class="code-line">)</span>
+
+
+<span class="code-line">VI_values, VI_policy = value_iteration(</span>
+<span class="code-line">    states, actions, transition_probs, rewards, gamma, theta</span>
+<span class="code-line">)</span></code></pre>
+    <p>
+      Both algorithms return two useful things: a value function and a policy.
+      If both solve the same MDP correctly, their final optimal policies should usually agree, apart from possible ties between equally good actions.
+    </p>
+
+
+    <h4>Use the policy in simulation</h4>
+<pre><code><span class="code-line">action = policy[current_state]</span>
+
+
+<span class="code-line">prob_list = []</span>
+<span class="code-line">for s_prime in states:</span>
+<span class="code-line">    prob_list.append(</span>
+<span class="code-line">        transition_probs[current_state][action][s_prime]</span>
+<span class="code-line">    )</span>
+
+
+<span class="code-line hi">next_state = np.random.choice(states, p=prob_list)</span>
+
+
+<span class="code-line">reward = rewards[current_state][action]</span>
+<span class="code-line">total_rewards += reward</span>
+<span class="code-line">current_state = next_state</span></code></pre>
+
+
+    <p>
+      <span class="inline">np.random.choice(..., p=prob_list)</span> samples the next state using the MDP's transition probabilities.
+      This is where probabilities such as 0.8 and 0.2 would matter in a genuinely stochastic transition.
+    </p>
+
+
+    <h4>Compare the final results</h4>
+<pre><code><span class="code-line">value_diff = sum([</span>
+<span class="code-line">    abs(VI_values[state] - PI_values[state])</span>
+<span class="code-line">    for state in states</span>
+<span class="code-line">])</span>
+
+
+<span class="code-line">policy_diff = sum([</span>
+<span class="code-line">    1 if VI_policy[state] != PI_policy[state] else 0</span>
+<span class="code-line">    for state in states</span>
+<span class="code-line">])</span></code></pre>
+
+
+    <div class="grid2">
+      <div class="card">
+        <h4>value_diff</h4>
+        <p>Measures how different the two final value functions are across the states.</p>
+      </div>
+      <div class="card">
+        <h4>policy_diff</h4>
+        <p>Counts how many states have different chosen actions between the two policies.</p>
+      </div>
+    </div>
+
+
+    <div class="takeaway">
+      <h4>Policy Iteration vs Value Iteration: remember this</h4>
+      <div class="grid2">
+        <div class="card">
+          <h4>Policy Iteration</h4>
+          <p><b>Policy first.</b></p>
+          <p>Evaluate the current policy, improve it, and repeat until the policy stops changing.</p>
+        </div>
+        <div class="card">
+          <h4>Value Iteration</h4>
+          <p><b>Value first.</b></p>
+          <p>Repeatedly update each state using the best action value, then extract the policy once the values stabilise.</p>
+        </div>
+      </div>
+      <p class="bigline" style="margin-top:14px">
+        PI: “How good is my current policy, and can I improve it?”<br>
+        VI: “What is the best value I can achieve from every state?”
+      </p>
+    </div>
+
+
+    <h3>7.2 Which is faster?</h3>
+    <p>
+      Do not state that one is universally faster. Policy Iteration may require fewer outer policy changes but each evaluation phase can be expensive.
+      Value Iteration uses simpler optimality sweeps but may need more sweeps. The result depends on the MDP, stopping criteria, and implementation.
+    </p>
+
+
+    <h3>7.3 Where Dynamic Programming fits in RL</h3>
+    <div class="callout">
+      <strong>Important boundary</strong>
+      These DP methods assume the MDP model is known: transition probabilities and rewards are available.
+      They are therefore model-based planning methods and form a foundation for later RL methods that learn when the model is not fully known.
+    </div>
+  </section>
+
+
+  <!-- MCQ -->
+  <section class="section" id="quiz">
+    <div class="nb-label"><b>MCQs</b> · Week 5 concept check</div>
+    <h2>8. Multiple Choice Questions</h2>
+    <p class="subhead">
+      Select one answer for each question. The page will tell you whether it is correct and explain why.
+    </p>
+
+
+    <div class="quiz mcq" data-answer="b">
+      <b>Q1. What does π(a|s) represent?</b>
+      <label><input type="radio" name="q1" value="a"> The probability of moving to next state s′</label>
+      <label><input type="radio" name="q1" value="b"> The probability that the policy chooses action a in state s</label>
+      <label><input type="radio" name="q1" value="c"> The immediate reward for taking action a</label>
+      <label><input type="radio" name="q1" value="d"> The value of the next state</label>
+      <button class="ctrl" onclick="checkMCQ(this)">Check answer</button>
+      <div class="answer">
+        <b>Correct answer: B.</b> π(a|s) is an agent-side probability: how likely the current policy is to choose action a while in state s.
+      </div>
+    </div>
+
+
+    <div class="quiz mcq" data-answer="c">
+      <b>Q2. In the 4×4 GridWorld, why does every action term use 0.25 during random-policy evaluation?</b>
+      <label><input type="radio" name="q2" value="a"> Because the transition probability is always 0.25</label>
+      <label><input type="radio" name="q2" value="b"> Because γ = 0.25</label>
+      <label><input type="radio" name="q2" value="c"> Because four actions are equally likely under the random policy</label>
+      <label><input type="radio" name="q2" value="d"> Because every state has four next states</label>
+      <button class="ctrl" onclick="checkMCQ(this)">Check answer</button>
+      <div class="answer">
+        <b>Correct answer: C.</b> LEFT, RIGHT, UP and DOWN are each selected with probability 1/4 = 0.25.
+      </div>
+    </div>
+
+
+    <div class="quiz mcq" data-answer="b">
+      <b>Q3. In the deterministic GridWorld, after choosing RIGHT from a state, one valid successor can have P(s′|s,RIGHT) = 1. What does that mean?</b>
+      <label><input type="radio" name="q3" value="a"> RIGHT is always chosen by the policy</label>
+      <label><input type="radio" name="q3" value="b"> Once RIGHT is chosen, that successor state occurs with certainty</label>
+      <label><input type="radio" name="q3" value="c"> The reward is always +1</label>
+      <label><input type="radio" name="q3" value="d"> There is only one available action</label>
+      <button class="ctrl" onclick="checkMCQ(this)">Check answer</button>
+      <div class="answer">
+        <b>Correct answer: B.</b> This is a transition probability, not a policy probability. It describes what the environment does after the action has already been selected.
+      </div>
+    </div>
+
+
+    <div class="quiz mcq" data-answer="d">
+      <b>Q4. What happens if the agent tries to move off the edge of the GridWorld?</b>
+      <label><input type="radio" name="q4" value="a"> The episode ends immediately</label>
+      <label><input type="radio" name="q4" value="b"> The action is ignored and no reward is received</label>
+      <label><input type="radio" name="q4" value="c"> The agent moves diagonally</label>
+      <label><input type="radio" name="q4" value="d"> The agent stays in the same state and still receives the −1 step reward</label>
+      <button class="ctrl" onclick="checkMCQ(this)">Check answer</button>
+      <div class="answer">
+        <b>Correct answer: D.</b> The attempted action is still a valid time step, so the agent stays in place but still pays the −1 transition cost.
+      </div>
+    </div>
+
+
+    <div class="quiz mcq" data-answer="a">
+      <b>Q5. Which formula is being used when we calculate V₁(s) = 0.25(−1+0) + 0.25(−1+0) + 0.25(−1+0) + 0.25(−1+0)?</b>
+      <label><input type="radio" name="q5" value="a"> Bellman Expectation Equation for policy evaluation</label>
+      <label><input type="radio" name="q5" value="b"> Bellman Optimality Equation</label>
+      <label><input type="radio" name="q5" value="c"> Q-Learning update</label>
+      <label><input type="radio" name="q5" value="d"> Monte Carlo return</label>
+      <button class="ctrl" onclick="checkMCQ(this)">Check answer</button>
+      <div class="answer">
+        <b>Correct answer: A.</b> We are evaluating a fixed random policy, so actions are weighted by π(a|s) rather than taking a maximum.
+      </div>
+    </div>
+
+
+    <div class="quiz mcq" data-answer="c">
+      <b>Q6. Why is a value of −2 better than a value of −10 in this GridWorld?</b>
+      <label><input type="radio" name="q6" value="a"> Because −10 is closer to the terminal value</label>
+      <label><input type="radio" name="q6" value="b"> Because the policy prefers larger absolute values</label>
+      <label><input type="radio" name="q6" value="c"> Because each step costs −1, so −2 represents less expected accumulated cost than −10</label>
+      <label><input type="radio" name="q6" value="d"> Because γ is negative</label>
+      <button class="ctrl" onclick="checkMCQ(this)">Check answer</button>
+      <div class="answer">
+        <b>Correct answer: C.</b> Fewer expected −1 penalties means a larger, less-negative return.
+      </div>
+    </div>
+
+
+    <div class="quiz mcq" data-answer="b">
+      <b>Q7. What is the main difference between Policy Iteration and Value Iteration?</b>
+      <label><input type="radio" name="q7" value="a"> Policy Iteration cannot find an optimal policy</label>
+      <label><input type="radio" name="q7" value="b"> Policy Iteration alternates evaluation and improvement, while Value Iteration uses max directly inside the value update</label>
+      <label><input type="radio" name="q7" value="c"> Value Iteration never uses rewards</label>
+      <label><input type="radio" name="q7" value="d"> Policy Iteration only works in stochastic environments</label>
+      <button class="ctrl" onclick="checkMCQ(this)">Check answer</button>
+      <div class="answer">
+        <b>Correct answer: B.</b> Policy Iteration works around a current policy. Value Iteration directly applies the Bellman optimality backup.
+      </div>
+    </div>
+
+
+    <div class="quiz mcq" data-answer="d">
+      <b>Q8. Why does Value Iteration use max over actions?</b>
+      <label><input type="radio" name="q8" value="a"> To average all possible actions</label>
+      <label><input type="radio" name="q8" value="b"> To reduce the transition probabilities</label>
+      <label><input type="radio" name="q8" value="c"> To choose the smallest reward</label>
+      <label><input type="radio" name="q8" value="d"> To keep the action with the highest expected return</label>
+      <button class="ctrl" onclick="checkMCQ(this)">Check answer</button>
+      <div class="answer">
+        <b>Correct answer: D.</b> Value Iteration is solving a control problem, so it keeps the best action value rather than averaging actions according to a fixed policy.
+      </div>
+    </div>
+
+
+    <div class="quiz mcq" data-answer="a">
+      <b>Q9. In Q(s,a) = 0.8[R + γV(B)] + 0.2[R + γV(C)], what do 0.8 and 0.2 represent?</b>
+      <label><input type="radio" name="q9" value="a"> Transition probabilities for reaching B and C after taking action a</label>
+      <label><input type="radio" name="q9" value="b"> Policy probabilities for choosing two different actions</label>
+      <label><input type="radio" name="q9" value="c"> Discount factors</label>
+      <label><input type="radio" name="q9" value="d"> Rewards</label>
+      <button class="ctrl" onclick="checkMCQ(this)">Check answer</button>
+      <div class="answer">
+        <b>Correct answer: A.</b> They are P(B|s,a)=0.8 and P(C|s,a)=0.2. They describe environmental uncertainty after action a has already been chosen.
+      </div>
+    </div>
+
+
+    <div class="quiz mcq" data-answer="c">
+      <b>Q10. What does delta measure in Value Iteration?</b>
+      <label><input type="radio" name="q10" value="a"> The number of available actions</label>
+      <label><input type="radio" name="q10" value="b"> The total reward collected by the agent</label>
+      <label><input type="radio" name="q10" value="c"> The largest value change observed during a sweep</label>
+      <label><input type="radio" name="q10" value="d"> The probability of reaching a terminal state</label>
+      <button class="ctrl" onclick="checkMCQ(this)">Check answer</button>
+      <div class="answer">
+        <b>Correct answer: C.</b> delta tracks the maximum absolute difference between old and new state values. When delta becomes smaller than theta, the algorithm stops.
+      </div>
+    </div>
+
+
+    <div class="quiz mcq" data-answer="b">
+      <b>Q11. What is the difference between synchronous and in-place updating?</b>
+      <label><input type="radio" name="q11" value="a"> Synchronous uses rewards, while in-place does not</label>
+      <label><input type="radio" name="q11" value="b"> Synchronous reads only old-sweep values, while in-place can immediately reuse newly updated values</label>
+      <label><input type="radio" name="q11" value="c"> In-place cannot converge</label>
+      <label><input type="radio" name="q11" value="d"> Synchronous only works for terminal states</label>
+      <button class="ctrl" onclick="checkMCQ(this)">Check answer</button>
+      <div class="answer">
+        <b>Correct answer: B.</b> This is the key distinction. In-place can propagate fresh information farther within the same sweep.
+      </div>
+    </div>
+
+
+    <div class="quiz mcq" data-answer="d">
+      <b>Q12. In the Gymnasium notebook, what does env.unwrapped.P[state][action] provide?</b>
+      <label><input type="radio" name="q12" value="a"> Only the current policy</label>
+      <label><input type="radio" name="q12" value="b"> Only the reward</label>
+      <label><input type="radio" name="q12" value="c"> Only the next state index</label>
+      <label><input type="radio" name="q12" value="d"> The possible transition outcomes for that state-action pair, including probability, next state, reward and termination information</label>
+      <button class="ctrl" onclick="checkMCQ(this)">Check answer</button>
+      <div class="answer">
+        <b>Correct answer: D.</b> The Gymnasium environment already stores the MDP dynamics, so the algorithm reads them instead of manually constructing P and R.
+      </div>
+    </div>
+
+
+    <div class="takeaway">
+      <h4>Final memory check</h4>
+      <p class="bigline">
+        Policy Evaluation = average according to π.<br>
+        Policy Iteration = evaluate policy → improve policy → repeat.<br>
+        Value Iteration = try all actions → keep max → repeat → extract policy.
+      </p>
+    </div>
+
+
+    <div class="sourcebox">
+      <b>Based on the supplied Week 5 materials:</b><br>
+      Week 5 Lecture 2026, Sutton &amp; Barto GridWorld material, the Value Iteration student and solution notebooks,
+      the Gymnasium notebook, and the previous tutor transcript.
+    </div>
+  </section>
+</main>
+</div>
+
+
+<script>
+const sections = [...document.querySelectorAll('.section')];
+const navs = [...document.querySelectorAll('.nav-btn')];
+
+
+function openSection(id){
+  sections.forEach(s => s.classList.toggle('active', s.id === id));
+  navs.forEach(n => n.classList.toggle('active', n.dataset.target === id));
+  const activeNav = navs.find(n => n.dataset.target === id);
+  document.getElementById('currentLabel').textContent =
+    activeNav ? activeNav.childNodes[0].textContent.trim() : id;
+  window.scrollTo({top:0,behavior:'smooth'});
+  updateProgress(id);
+}
+
+
+navs.forEach(n => n.addEventListener('click',()=>openSection(n.dataset.target)));
+
+
+function updateProgress(id){
+  const idx = sections.findIndex(s => s.id === id);
+  document.getElementById('progressBar').style.width = (((idx+1)/sections.length)*100)+'%';
+}
+updateProgress('overview');
+
+
+document.getElementById('coreMode').onclick = function(){
+  document.querySelectorAll('.deep').forEach(x=>x.style.display='none');
+  this.classList.add('active');
+  document.getElementById('allMode').classList.remove('active');
+};
+document.getElementById('allMode').onclick = function(){
+  document.querySelectorAll('.deep').forEach(x=>x.style.display='block');
+  this.classList.add('active');
+  document.getElementById('coreMode').classList.remove('active');
+};
+
+
+const kData = {
+  k0:{
+    vals:[0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0],
+    note:"Initial estimate: every value starts at 0."
+  },
+  k1:{
+    vals:[0,-1,-1,-1, -1,-1,-1,-1, -1,-1,-1,-1, -1,-1,-1,0],
+    note:"After one sweep, every non-terminal state sees the immediate −1 cost."
+  },
+  k2:{
+    vals:[0,-1.7,-2,-2, -1.7,-2,-2,-2, -2,-2,-2,-1.7, -2,-2,-1.7,0],
+    note:"States near a terminal become less negative because one action can terminate quickly."
+  },
+  k3:{
+    vals:[0,-2.4,-2.9,-3, -2.4,-2.9,-3,-2.9, -2.9,-3,-2.9,-2.4, -3,-2.9,-2.4,0],
+    note:"Longer-term consequences have propagated farther through the grid."
+  },
+  kinf:{
+    vals:[0,-14,-20,-22, -14,-18,-20,-20, -20,-20,-18,-14, -22,-20,-14,0],
+    note:"Converged random-policy values (rounded). Less negative states are better."
+  }
+};
+
+
+function renderGrid(key){
+  const grid = document.getElementById('gridMatrix');
+  grid.innerHTML = '';
+  kData[key].vals.forEach((v,i)=>{
+    const d=document.createElement('div');
+    d.className='cell'+((i===0||i===15)?' term':'');
+    d.textContent=v;
+    grid.appendChild(d);
+  });
+  document.getElementById('gridNote').textContent=kData[key].note;
+}
+function showK(key,btn){
+  document.querySelectorAll('#gridworld .k-buttons .ctrl').forEach(x=>x.classList.remove('active'));
+  btn.classList.add('active');
+  renderGrid(key);
+}
+renderGrid('k0');
+
+
+function calcBellman(){
+  const g=parseFloat(document.getElementById('pgGamma').value)||0;
+  const r=parseFloat(document.getElementById('pgReward').value)||0;
+  const vals=[
+    ['LEFT',parseFloat(document.getElementById('pgL').value)||0],
+    ['RIGHT',parseFloat(document.getElementById('pgR').value)||0],
+    ['UP',parseFloat(document.getElementById('pgU').value)||0],
+    ['DOWN',parseFloat(document.getElementById('pgD').value)||0]
+  ];
+  const actionVals=vals.map(([name,v])=>[name,r+g*v]);
+  const randomVal=actionVals.reduce((a,x)=>a+x[1],0)/4;
+  const best=actionVals.reduce((a,b)=>a[1]>=b[1]?a:b);
+  document.getElementById('bellmanResult').innerHTML=`
+    <div style="font-size:.82rem;color:var(--muted);font-weight:800;text-transform:uppercase;letter-spacing:.08em">Action values</div>
+    ${actionVals.map(x=>`<div>${x[0]}: ${x[1].toFixed(3)}</div>`).join('')}
+    <hr style="border:0;border-top:1px solid var(--line);margin:12px 0">
+    <div>Random policy value (0.25 each): <strong>${randomVal.toFixed(3)}</strong></div>
+    <div>Value Iteration backup: <strong>${best[1].toFixed(3)}</strong></div>
+    <div>Greedy action / argmax: <strong>${best[0]}</strong></div>
+  `;
+}
+calcBellman();
+
+
+function toggleAnswer(btn){
+  const ans=btn.parentElement.querySelector('.answer');
+  ans.classList.toggle('show');
+  btn.textContent=ans.classList.contains('show')?'Hide':'Reveal';
+}
+
+
+function checkMCQ(btn){
+  const box = btn.closest('.mcq');
+  const selected = box.querySelector('input[type="radio"]:checked');
+
+
+  let feedback = box.querySelector('.feedback');
+  if(!feedback){
+    feedback = document.createElement('div');
+    feedback.className = 'feedback';
+    btn.insertAdjacentElement('afterend', feedback);
+  }
+
+
+  if(!selected){
+    feedback.textContent = 'Choose an option first.';
+    feedback.classList.add('show');
+    box.classList.remove('correct','incorrect');
+    return;
+  }
+
+
+  const correct = box.dataset.answer;
+  const explanation = box.querySelector('.answer');
+
+
+  if(selected.value === correct){
+    box.classList.add('correct');
+    box.classList.remove('incorrect');
+    feedback.textContent = 'Correct.';
+  } else {
+    box.classList.add('incorrect');
+    box.classList.remove('correct');
+    feedback.textContent = 'Not quite. Check the explanation below.';
+  }
+
+
+  feedback.classList.add('show');
+  explanation.classList.add('show');
+}
+</script>
+</body>
+</html>

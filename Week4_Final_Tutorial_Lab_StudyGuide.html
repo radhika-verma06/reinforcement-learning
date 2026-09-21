@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tutorial Week 4 — Policy Iteration Study Guide</title>
+<style>
+  :root{--bg:#1a1024;--panel:#2a1b3d;--panel2:#221532;--lime:#b8f93a;--gold:#ffcf5c;--purple:#b78bff;--ink:#f2eaff;--muted:#b9a8d6;--line:#3d2b57;}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--ink);line-height:1.6}
+  .wrap{max-width:920px;margin:0 auto;padding:30px 22px 90px}
+  h1{color:var(--lime);font-size:2em;margin:0 0 6px}
+  .sub{color:var(--muted);margin-bottom:10px}
+  .meta{color:var(--muted);font-size:.85em;margin-bottom:30px;padding:10px 14px;background:var(--panel2);border-radius:10px;border:1px solid var(--line)}
+  h2{color:var(--gold);font-size:1.35em;margin:40px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--line)}
+  h3{color:var(--purple);font-size:1.08em;margin:24px 0 6px}
+  p{margin:8px 0}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px 20px;margin:14px 0}
+  .note{border-left:4px solid var(--gold);background:var(--panel);padding:12px 16px;margin:12px 0;border-radius:0 10px 10px 0}
+  .warn{border-left:4px solid var(--purple);background:var(--panel);padding:12px 16px;margin:12px 0;border-radius:0 10px 10px 0}
+  .eq{background:#20122e;border:1px solid var(--line);border-radius:10px;padding:13px 16px;font-family:Consolas,monospace;color:var(--lime);font-size:1.0em;margin:10px 0;overflow-x:auto}
+  code{background:var(--panel2);padding:2px 6px;border-radius:5px;font-family:Consolas,monospace;color:var(--lime);font-size:.92em}
+  pre{background:#181025;border:1px solid var(--line);border-radius:10px;padding:14px;overflow-x:auto;font-family:Consolas,monospace;font-size:.86em;line-height:1.5}
+  pre b{color:var(--gold)}
+  table{border-collapse:collapse;width:100%;margin:12px 0;font-size:.92em}
+  th,td{border:1px solid var(--line);padding:8px 10px;text-align:left}
+  th{color:var(--gold);background:var(--panel2)}
+  tr:nth-child(even) td{background:var(--panel2)}
+  ul,ol{margin:8px 0;padding-left:24px}
+  li{margin:5px 0}
+  .tag{display:inline-block;background:var(--purple);color:#191026;font-weight:700;padding:2px 10px;border-radius:20px;font-size:.72em;margin-left:8px;vertical-align:middle}
+  .flow{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:center;margin:18px 0}
+  .flow .box{background:var(--panel2);border:2px solid var(--purple);border-radius:12px;padding:12px 16px;font-weight:700;color:var(--gold);text-align:center}
+  .flow .arrow{color:var(--lime);font-size:1.5em}
+  .flow .box small{display:block;font-weight:400;color:var(--muted);font-size:.8em;margin-top:4px}
+  .grid4{display:grid;grid-template-columns:repeat(4,auto);gap:6px;justify-content:start;margin:12px 0}
+  .fcell{border:1px solid var(--line);border-radius:8px;padding:10px 12px;text-align:center;background:var(--panel2);min-width:64px}
+  .fcell b{display:block;font-size:1.1em;color:var(--lime)}
+  .fcell span{font-size:.72em;color:var(--muted)}
+  .fcell.start{background:#23300f;border-color:var(--lime)}
+  .fcell.hole{background:#351117;border-color:var(--coral)}
+  .fcell.goal{background:#3a2c10;border-color:var(--gold)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Tutorial Week 4 — Policy Iteration <span class="tag">study guide</span></h1>
+  <div class="sub">Solving MDPs with the Policy Iteration algorithm. Part 1: hand-implemented MDP (drone delivery). Part 2: applied to an OpenAI Gym environment (FrozenLake).</div>
+  <div class="meta">Based on the live tutorial recording (~84 min) + both lab notebooks: <i>43008-Week4-MDPs-PolicyIteration.ipynb</i> and <i>...-OpenAI-Gym-Solution.ipynb</i>. This is an explanation guide — read top to bottom, no interaction required.</div>
+
+  <h2>0. The big idea (what the tutor spent the class on)</h2>
+  <div class="card">
+    <p>Policy Iteration is our <b>first real RL algorithm</b>. It finds the <b>optimal policy</b> (the best action to take from each state) for a fully-known MDP. The tutor kept repeating one thing: this is a <b>two-step process run in a loop</b> — <b>Policy Evaluation</b> then <b>Policy Improvement</b>, alternating until the policy stops changing.</p>
+    <div class="flow">
+      <div class="box">Pick a policy <br><small>any policy, even random</small></div>
+      <div class="arrow">→</div>
+      <div class="box">1. EVALUATE <br><small>compute V_π (how good is this policy?)</small></div>
+      <div class="arrow">→</div>
+      <div class="box">2. IMPROVE <br><small>be greedy: pick best action per state</small></div>
+      <div class="arrow">→</div>
+      <div class="box">Policy changed?<br><small>yes → loop again</small></div>
+    </div>
+    <div class="note"><b>Stopping rule:</b> when the <b>new policy == previous policy</b>, there is no more room to improve → we've reached the <b>optimal policy</b>. We match on the <b>actions</b> a policy recommends, not on the value numbers.</div>
+  </div>
+
+  <h2>1. Policy Evaluation — "how good is this policy?"</h2>
+  <div class="card">
+    <p>First half of the algorithm (the tutor called it the <b>prediction problem</b>). Input: a policy π (any policy — often random to start). Output: the <b>state-value function</b> V_π, which says how good it is to be in each state <i>while following that policy</i>.</p>
+    <div class="eq">V_π(s) = Σ_s' P(s'|s, π(s)) · [ R(s, π(s), s') + γ · V_π(s') ]</div>
+    <p>For a <b>deterministic policy</b> (each state chooses one action), π(s) gives the action directly, and the equation simplifies.</p>
+    <h3>How it works internally (the iterative loop)</h3>
+    <ol>
+      <li>Initialize V(s) = 0 for every state.</li>
+      <li>For each state, <b>get the action from the policy</b> (the policy is fixed — we never touch it here).</li>
+      <li>For that chosen action, look up the <b>transition probabilities</b> P(s'|s,a) and the <b>reward</b> R, and compute the Bellman backup: <code>transition_prob × (reward + γ·V(next))</code>.</li>
+      <li>Update V(s) with that value; track the largest change <code>Δ</code>.</li>
+      <li>Repeat until <b>Δ &lt; θ</b> (a small threshold, a <b>hyperparameter</b> like γ — the tutor stressed there's no right answer, you pick it).</li>
+    </ol>
+    <div class="note"><b>Key mental model (from the tutor):</b> the recursion works because we <i>always</i> know the <b>next</b> state's value (V_π(s')), but not the current one — so V(s') starts at 0 and gets built up iteration by iteration. We can do this because "we know the next state, not the current one, that's why the value is initialized to zero."</div>
+    <p>Important: policy evaluation does <b>not require the argmax</b> and does <b>not change the policy</b>. It only follows the given policy and returns better V values.</p>
+  </div>
+
+  <h2>2. Policy Improvement — "can we do better?"</h2>
+  <div class="card">
+    <p>Second half (the <b>control problem</b>). Input: the value function V computed by Policy Evaluation. Output: an <b>improved (greedy) policy</b>.</p>
+    <div class="eq">π'(s) = argmax_a Σ_s' P(s'|s, a) · [ R(s, a, s') + γ · V(s') ]</div>
+    <p>For each state, for <b>each possible action</b>, compute the action-value Q_π(s,a) using V from step 1, then pick the action with the <b>highest Q value</b>:</p>
+    <div class="eq">Q_π(s,a) = Σ_s' P(s'|s, a) · [ R(s, a, s') + γ · V(s') ]</div>
+    <div class="note"><b>V vs Q (the tutor's wording):</b> "V_π is how good is <i>that state</i> following this policy. Q_π is how good is <i>the action</i> — but taken from that particular state." V judges the state; Q judges the action so we can pick the best one.</div>
+    <h3>Two important nuances the tutor pointed out:</h3>
+    <ul>
+      <li><b>Policy Improvement does NOT need a starting policy.</b> It builds a brand-new policy from scratch using the V values (which came from Policy Evaluation). Only Evaluation needs a policy to follow.</li>
+      <li><b>Deterministic vs stochastic:</b> in the drone MDP, each action leads to the next state with probability 1, so "argmax" collapses to just picking the single best action — no probability weighting needed. In <b>FrozenLake</b> (Part 2), actions are <b>probabilistic</b> (pushing a direction only sometimes works), so the argmax over the weighted Q values becomes essential.</li>
+    </ul>
+  </div>
+
+  <h2>3. Policy Iteration — the full loop</h2>
+  <div class="card">
+    <p>The orchestrator that alternates the two steps until convergence. The tutor emphasized it's literally just "a <code>while True</code> loop alternating between evaluation and improvement, breaking when new policy == previous policy."</p>
+    <div class="flow">
+      <div class="box">Random init<br><small>V=0, any π</small></div>
+      <div class="arrow">→</div>
+      <div class="box">EVALUATE<br><small>V_π via Bellman backup</small></div>
+      <div class="arrow">→</div>
+      <div class="box">IMPROVE<br><small>π' = argmax over Q</small></div>
+      <div class="arrow">→</div>
+      <div class="box">π' == π?<br><small>yes → done, π is optimal</small></div>
+    </div>
+    <p>It returns <b>two things</b>: the optimal value function V and the optimal policy π. The tutor stressed: because an MDP's environment is <b>fully known</b> (transition probs + rewards + actions + γ), the algorithm <b>is guaranteed to reach the optimal policy</b> — if it didn't, "there's no meaning to the algorithm."</p>
+    <div class="warn"><b>Recognize the code mapping (used in both notebooks):</b>
+      <ul>
+        <li><code>policy_evaluation(...)</code> / <code>compute_policy_v(...)</code> → the EVALUATE step (Bellman backup loop).</li>
+        <li><code>policy_improvement(...)</code> / <code>extract_policy(...)</code> → the IMPROVE step (argmax over Q).</li>
+        <li><code>policy_iteration(...)</code> → the outer while loop that alternates them.</li>
+      </ul>
+    </div>
+  </div>
+
+  <h2>4. Part 1 — Drone Package Delivery MDP (hand-implemented)</h2>
+  <div class="card">
+    <p>The case study: a delivery drone moves between zones <b>W (Warehouse), A, B, C</b>. States = current location; Actions = fly to W/A/B/C.</p>
+    <h3>The setup</h3>
+    <ul>
+      <li><b>States:</b> {W, A, B, C}</li>
+      <li><b>Actions:</b> {Fly_W, Fly_A, Fly_B, Fly_C}</li>
+      <li><b>Transition matrix:</b> deterministic cycle W→A→B→C→W:
+        <div class="eq">W:[0,1,0,0]  A:[0,0,1,0]  B:[0,0,0,1]  C:[1,0,0,0]</div>
+        So e.g. P(W→C) = 0, P(W→A) = 1 (only one action possible from W, the tutor walked through reading these probabilities).</li>
+      <li><b>Reward matrix:</b> reward for taking each action from each state:
+        <div class="eq">W:[0, 10, -4, -6]   A:[-2, 0, 10, -3]   B:[-3, -1, 0, 10]   C:[10, -3, -2, 0]</div>
+        (columns = Fly_W, Fly_A, Fly_B, Fly_C). So from W, flying to A gives +10, flying to B gives −4.</li>
+    </ul>
+    <h3>Solution (what Policy Iteration finds)</h3>
+    <table>
+      <tr><th>State</th><th>Optimal action</th><th>Optimal state value V*</th></tr>
+      <tr><td>W</td><td>Fly_A</td><td>0</td></tr>
+      <tr><td>A</td><td>Fly_B</td><td>−2</td></tr>
+      <tr><td>B</td><td>Fly_C</td><td>−3</td></tr>
+      <tr><td>C</td><td>Fly_W</td><td>10</td></tr>
+    </table>
+    <p>The policy is the full cycle: <b>W→A→B→C→W</b>, flying to each next location to grab its +10 reward. The value function V reflects that: C has the highest value (+10) because it can immediately reach the reward.</p>
+    <div class="note"><b>Tutor tip:</b> the initial policy is random — you can change it inside <code>policy_iteration</code> and the algorithm still converges to the same optimal policy. That's the point: the MDP dynamics (known) drive the answer, not the starting policy.</div>
+    <h3>Code structure to know</h3>
+    <pre><b># The MDP class wraps states/actions/transitions/rewards and converts
+# matrices to dictionaries for the algorithm.</b>
+class MDP:
+    def __init__(self, states, actions, transition_matrix, reward_matrix, discount_factor=1.0):
+        self.states = states
+        self.actions = actions
+        self.transition_matrix = transition_matrix
+        self.reward_matrix = reward_matrix
+        self.discount_factor = discount_factor
+
+    def convert_to_dictionary(self):        # -> transition_probs, rewards, actions dicts
+        ...
+
+<b># Then: build MDP, convert to dicts, run policy iteration.</b>
+drone_mdp = MDP(states, actions, transition_matrix, reward_matrix)
+transition_probs, rewards, actions = drone_mdp.convert_to_dictionary()
+V, policy = policy_iteration(states, actions, transition_probs, rewards, debug_print=True)</pre>
+  </div>
+
+  <h2>5. Part 2 — FrozenLake in OpenAI Gym</h2>
+  <div class="card">
+    <p>Same algorithm, but the environment (transition probabilities, rewards) comes from an <b>OpenAI Gym environment</b> instead of hand-written matrices. The tutor set up <code>FrozenLake-v1</code> with video rendering.</p>
+    <div class="eq">env = wrap_env(gym.make('FrozenLake-v1', new_step_api=True))</div>
+    <ul>
+      <li><b>Action space:</b> Discrete(4) — {Left, Down, Right, Up}</li>
+      <li><b>Observation space:</b> Discrete(16) — a 4×4 grid, 16 states.</li>
+      <li><b>Key difference from the drone:</b> the tutor stressed FrozenLake moves are <b>probabilistic</b> — pushing a direction doesn't always succeed. "From a particular state there are different probabilities of going up, down — there is not a single action." That's why <b>argmax over Q</b> becomes essential (you must average over successor states).</li>
+    </ul>
+    <h3>Mapping the algorithm onto the environment</h3>
+    <ul>
+      <li><code>compute_policy_v(env, policy, gamma)</code> → <b>Policy Evaluation</b>. Iterates V(s) using <code>env.P[s][action]</code> (the environment's transition + reward + done info) until convergence (epsilon ~1e-10).</li>
+      <li><code>extract_policy(v, gamma)</code> → <b>Policy Improvement</b>. Computes Q for all 4 actions per state, takes <code>argmax</code> of Q → new policy. "QSA is our action value, and we take the argmax of the action value."</li>
+      <li><code>policy_iteration(env, gamma)</code> → the outer loop. Initializes a random policy, loops compute_v → extract, stops when the policies match (<code>np.all(policy == new_policy)</code>).</li>
+      <li><code>evaluate_policy / run_episode</code> → <b>evaluation, not Policy Evaluation</b>. The tutor cleared this up: this measures how good the final policy actually is by running episodes and averaging total reward. An <b>episode</b> = one complete run of states from start to terminal state (the "one complete path from here to the goal, then it restarts").</li>
+    </ul>
+    <h3>Result (from the notebook)</h3>
+    <div class="eq">Policy iteration took 0.36 seconds. Converged at step 7.  Average score = 1.0</div>
+    <p>The optimal policy reshaped to the 4×4 grid (each cell shows the best action for that state):</p>
+    <div class="grid4">
+      <div class="fcell start"><b>0</b><span>L</span></div><div class="fcell"><b>3</b><span>U</span></div><div class="fcell"><b>3</b><span>U</span></div><div class="fcell"><b>3</b><span>U</span></div>
+      <div class="fcell"><b>0</b><span>L</span></div><div class="fcell"><b>0</b><span>L</span></div><div class="fcell"><b>0</b><span>L</span></div><div class="fcell"><b>0</b><span>L</span></div>
+      <div class="fcell"><b>3</b><span>U</span></div><div class="fcell"><b>1</b><span>D</span></div><div class="fcell"><b>0</b><span>L</span></div><div class="fcell"><b>0</b><span>L</span></div>
+      <div class="fcell"><b>0</b><span>L</span></div><div class="fcell"><b>2</b><span>R</span></div><div class="fcell"><b>1</b><span>D</span></div><div class="fcell goal"><b>0</b><span>goal</span></div>
+    </div>
+    <p style="font-size:.85em;color:var(--muted)">Action legend: 0 = Left, 1 = Down, 2 = Right, 3 = Up. Running one episode under the optimal policy gives total reward = 1.0 (reaching the goal).</p>
+    <div class="note"><b>Key insight from the tutor:</b> the policy gives, for any state, "not just one step — the best reward you can get until the end, the full pattern of steps." One episode under that policy for FrozenLake scores 1.0 (success).</div>
+  </div>
+
+  <h2>6. Assignment 1 guidance (from the tutor)</h2>
+  <div class="card">
+    <p>The tutor spent time explaining what assignment 1 expects. You will be given a scenario (e.g. an autonomous navigation system) and must:</p>
+    <ol>
+      <li><b>Design your own MDP:</b> define the <b>states</b>, the <b>actions</b> available from each state, and draw a <b>state-transition diagram</b>.</li>
+      <li>Define the <b>transition matrix</b> and <b>reward matrix</b> from that diagram.</li>
+      <li>Run <b>Policy Iteration</b> to get the value function and policy.</li>
+      <li><b>You cannot use gymnasium</b> for assignment 1 — you hand-define the MDP (like Part 1, not Part 2).</li>
+    </ol>
+    <div class="note"><b>"There is nothing called best accuracy, best policy, or optimal policy here."</b> Any policy you get is fine — what matters is that you <b>logically explain WHY</b> you chose your transition-matrix values and reward-matrix values (e.g. why a particular transition has probability 0.7, why a penalty is −4). "If you can properly explain why, you'll get full marks." Depth of reasoning beats the numbers themselves — just like in deep learning, don't chase accuracy.</div>
+  </div>
+
+  <h2>7. Study advice & key takeaways</h2>
+  <div class="card">
+    <h3>What the tutor emphasized</h3>
+    <ul>
+      <li><b>Don't miss lectures.</b> This course is math-heavy ("starting from this week, it's really really hard if you don't understand this part").</li>
+      <li><b>Rewrite the formulas by hand</b> (pen and paper). "Start from R(t+1), the expected value of G_t... rewrite the formula and it will never leave your head." Follow <i>Sutton &amp; Barto</i> (the book, free — see your reading list) for the derivations.</li>
+      <li><b>Blindly coding the formulas is fine for the implementation</b>, but you must understand the <b>theory</b> for MDPs — learn the terminology: what V_π(s) is, what each term in the Bellman equation does.</li>
+      <li><b>Theta (θ) is a hyperparameter</b> just like γ ("no hard rule... based on what you decide"). γ ∈ [0,1]: increase γ → rely more on future/delayed rewards; γ=0 → only immediate reward.</li>
+      <li><b>Don't mix RL jargon with deep-learning intuition.</b> The tutor specifically said: don't relate anything from deep learning to RL. E.g. "evaluate_policy" here is NOT the Policy Evaluation step — it's testing the finished policy by running episodes, analogous to plotting learning curves.</li>
+      <li><b>Next week:</b> Value Iteration — "you'll see the difference between policy iteration and value iteration next week, then everything will be clear."</li>
+    </ul>
+    <h3>Checklist — can you explain these?</h3>
+    <ul>
+      <li>What does V_π(s) measure, and why is it an expectation?</li>
+      <li>Why does the current state's value depend on the NEXT state's value (recursion)?</li>
+      <li>The two steps of Policy Iteration, and why Improvement needs no starting policy but Evaluation does.</li>
+      <li>Why deterministic MDPs skip the probability weighting (argmax still there, just over one action).</li>
+      <li>Why FrozenLake needs the argmax over Q, unlike the drone MDP.</li>
+      <li>When the overall algorithm stops, and what it returns.</li>
+    </ul>
+  </div>
+</div>
+</body>
+</html>
