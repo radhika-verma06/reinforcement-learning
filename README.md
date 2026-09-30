@@ -1,4 +1,4 @@
-# Reinforcement Learning — Visual Study Guides (Weeks 4–8)
+# Reinforcement Learning — Visual Study Guides (Weeks 4–9)
 
 Self-contained, interactive HTML study guides for core Reinforcement Learning topics.
 
@@ -15,6 +15,7 @@ No install, no build step: just open a file in your browser.
 | 6 | Monte Carlo Methods — prediction & control | [`week6-monte-carlo.html`](week6-monte-carlo.html) |
 | 7 | Temporal-Difference Learning — TD(0), SARSA, Q-Learning & the Taxi environment | [`week7-temporal-difference.html`](week7-temporal-difference.html) |
 | 8 | Function Approximation → Double Q-Learning → DQN | [`week8-function-approximation-dqn.html`](week8-function-approximation-dqn.html) |
+| 9 | Custom CNN → DQN → Stable-Baselines3 → Atari — an interactive tutorial | [`week9-cnn-to-dqn.html`](week9-cnn-to-dqn.html) |
 
 ## 🧠 Topics covered
 
@@ -24,6 +25,10 @@ No install, no build step: just open a file in your browser.
 - **Temporal-difference learning** — TD(0) prediction with the Taxi environment, SARSA, Q-Learning
 - **Function approximation** — why tables break down, simple neural networks for value estimation
 - **Deep RL** — Double Q-Learning (overestimation bias) and DQN building blocks
+- **CNNs & custom networks** — building a CNN feature extractor in PyTorch and reading every tensor shape
+- **DQN in practice** — ε-greedy, experience replay, target networks, the Bellman target
+- **Stable-Baselines3** — exposing DQN hyperparameters, checkpoints and learning curves
+- **Atari with pixel observations** — stacking frames and attaching a custom CNN to DQN
 
 ## ▶️ How to use
 
