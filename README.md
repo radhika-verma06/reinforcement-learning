@@ -1,4 +1,4 @@
-# Reinforcement Learning — Visual Study Guides (Weeks 4–9)
+# Reinforcement Learning — Visual Study Guides (Weeks 4–11)
 
 Self-contained, interactive HTML study guides for core Reinforcement Learning topics.
 
@@ -16,6 +16,8 @@ No install, no build step: just open a file in your browser.
 | 7 | Temporal-Difference Learning — TD(0), SARSA, Q-Learning & the Taxi environment | [`week7-temporal-difference.html`](week7-temporal-difference.html) |
 | 8 | Function Approximation → Double Q-Learning → DQN | [`week8-function-approximation-dqn.html`](week8-function-approximation-dqn.html) |
 | 9 | Custom CNN → DQN → Stable-Baselines3 → Atari — an interactive tutorial | [`week9-cnn-to-dqn.html`](week9-cnn-to-dqn.html) |
+| 10 | Soft Actor-Critic (SAC), PPO, GAE and CNN policies | [`week10-sac-ppo.html`](week10-sac-ppo.html) |
+| 11 | Monte Carlo Tree Search, CartPole and Mini-RLHF | [`week11-mcts-rlhf.html`](week11-mcts-rlhf.html) |
 
 ## 🧠 Topics covered
 
@@ -29,6 +31,8 @@ No install, no build step: just open a file in your browser.
 - **DQN in practice** — ε-greedy, experience replay, target networks, the Bellman target
 - **Stable-Baselines3** — exposing DQN hyperparameters, checkpoints and learning curves
 - **Atari with pixel observations** — stacking frames and attaching a custom CNN to DQN
+- **Policy-gradient methods** — SAC replay, entropy, PPO clipping, GAE and CNN policies
+- **Planning & preference learning** — MCTS/UCT, CartPole search, pairwise reward models and Best-of-N selection
 
 ## ▶️ How to use
 

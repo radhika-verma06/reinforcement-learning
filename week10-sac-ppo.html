@@ -1,0 +1,407 @@
+<!doctype html><html lang="en-AU"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Week 10 | SAC and PPO explained simply</title><style>
+
+:root{
+  --bg:#ffffff; --panel:#ffffff; --panel2:#f5f7fa; --ink:#17253b; --muted:#526174;
+  --line:#e0e6ed; --cyan:#2462ad; --mint:#24776c; --amber:#966818; --rose:#a44862;
+  --violet:#645795; --blue:#2462ad; --good:#23754f; --bad:#b34444;
+  --code:#f5f7fa; --max:1280px;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif}
+a{color:var(--cyan);text-underline-offset:3px}
+button,input{font:inherit}
+button,input[type=range],summary{accent-color:var(--cyan)}
+:focus-visible{outline:3px solid #3488c8;outline-offset:4px}
+.shell{max-width:var(--max);margin:0 auto;padding:0 32px}
+.hero{padding:48px 0 38px;background:#14263f;color:#ffffff;border-bottom:1px solid #14263f}
+.eyebrow{letter-spacing:.12em;text-transform:uppercase;color:#a7d6ed;font-weight:600;font-size:.75rem}
+h1{font-size:clamp(2rem,4vw,3rem);line-height:1.15;margin:14px 0 16px;letter-spacing:-.035em;max-width:1000px;font-weight:650}
+.hero p{max-width:880px;color:#d0dae6;font-size:1rem;line-height:1.7}
+.pills{display:flex;flex-wrap:wrap;gap:8px;margin-top:22px}
+.pill{border:1px solid #45566e;background:transparent;padding:5px 10px;border-radius:5px;color:#e5edf5;font-size:.78rem}
+.layout{display:grid;grid-template-columns:220px minmax(0,1fr);gap:38px;align-items:start}
+nav{position:sticky;top:24px;margin-top:38px;background:#ffffff;border-right:1px solid var(--line);padding:0 18px 0 0;max-height:calc(100vh - 48px);overflow:auto}
+nav a{display:block;text-decoration:none;color:var(--muted);padding:8px 10px;border-radius:5px;font-size:.82rem;line-height:1.4;margin:2px 0}
+nav a:hover,nav a:focus-visible{background:#f0f5fa;color:var(--cyan)}
+nav .navtitle{color:var(--ink);font-weight:650;padding:0 10px 12px;font-size:.85rem}
+main{min-width:0;padding:38px 0 64px}
+section{scroll-margin-top:24px;margin-bottom:52px;padding-bottom:32px;border-bottom:1px solid var(--line)}
+section:last-child{border-bottom:0}
+h2{font-size:1.75rem;line-height:1.25;margin:0 0 20px;letter-spacing:-.025em;font-weight:650}
+h3{font-size:1.15rem;margin:28px 0 12px;color:var(--ink);font-weight:650;line-height:1.4}
+.card h3{margin-top:8px}
+h4{font-size:.86rem;margin:22px 0 8px;color:var(--cyan);text-transform:uppercase;letter-spacing:.06em;font-weight:650}
+p{margin:10px 0;color:#344357}.muted{color:var(--muted)}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:20px;box-shadow:none}
+.card strong{color:var(--ink)}.card p:last-child{margin-bottom:0}
+.kicker{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;color:var(--cyan);font-weight:650}
+.callout{border-left:3px solid #4c87b9;background:#f3f7fb;padding:14px 17px;border-radius:0 5px 5px 0;margin:18px 0}
+.callout.warn{border-color:#b68a39;background:#fcf9f2}
+.callout.pink{border-color:#b96a80;background:#fbf5f7}
+.callout.good{border-color:#548b75;background:#f3f8f5}
+pre{background:var(--code);border:1px solid var(--line);border-radius:6px;padding:16px;overflow:auto;color:#243850;font:13px/1.65 ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;white-space:pre}
+code{font:.9em ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;background:#f1f4f7;border:1px solid #e2e8ee;border-radius:4px;padding:.08em .3em;color:#244268;overflow-wrap:anywhere}
+pre code{background:none;border:0;padding:0;overflow-wrap:normal}
+.eq{background:#f5f7fa;border:1px solid var(--line);border-radius:6px;padding:15px 17px;font:14px/1.7 ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;color:#243850;overflow:auto;margin:14px 0}
+.eq b{color:#244268}
+.flow{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;align-items:center;margin:18px 0}
+.node{padding:14px 10px;text-align:center;border:1px solid var(--line);border-radius:6px;background:#f7f9fb;min-height:76px;display:flex;flex-direction:column;justify-content:center}
+.node span{color:var(--muted);font-size:.8rem;line-height:1.5}
+.arrow{text-align:center;color:var(--cyan);font-weight:650;font-size:1.3rem}.flow .arrow{display:none}
+.flowline{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:16px 0}
+.flowline .node{flex:1 1 110px}.flowline .arr{color:#6f829a;font-size:1.3rem}
+.badge{display:inline-block;padding:3px 7px;border-radius:4px;font-size:.7rem;font-weight:600;margin:2px 0;letter-spacing:.01em}
+.b-cyan{background:#edf4fc;color:var(--cyan)}.b-violet{background:#f2eff8;color:var(--violet)}
+.b-amber{background:#faf3e4;color:var(--amber)}.b-mint{background:#edf6f3;color:var(--mint)}.b-rose{background:#faf0f3;color:var(--rose)}
+table{width:100%;border-collapse:separate;border-spacing:0;margin:18px 0;border:1px solid var(--line);border-radius:6px;overflow:hidden;background:var(--panel);font-size:.88rem}
+th,td{text-align:left;vertical-align:top;padding:12px 13px;border-bottom:1px solid var(--line);overflow-wrap:anywhere}
+th{font-size:.73rem;text-transform:uppercase;letter-spacing:.04em;color:#526174;background:#f5f7fa;font-weight:650}
+td{color:#344357}tr:last-child td{border-bottom:0}
+.details{border:1px solid var(--line);border-radius:6px;background:var(--panel);margin:12px 0;overflow:hidden}
+.details summary{cursor:pointer;padding:14px 16px;font-weight:600;list-style:none;font-size:.94rem}
+.details summary:hover{background:#f7f9fb}
+.details summary::-webkit-details-marker{display:none}
+.details summary:after{content:"+";float:right;color:var(--cyan)}.details[open] summary:after{content:"−"}
+.details .inside{padding:0 16px 16px}
+.interactive{background:#f7f9fb;border:1px solid var(--line);border-radius:8px;padding:20px;margin:18px 0}
+.interactive label{display:block;margin:8px 0 4px;color:var(--ink);font-weight:600;font-size:.9rem}
+.interactive input[type=range]{width:100%;cursor:pointer}
+.meter{height:8px;background:#e2e9f0;border-radius:99px;overflow:hidden;margin-top:10px}
+.meter>div{height:100%;width:50%;background:#357ca8}
+.twoCol{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.compare{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.compare .card:first-child{border-top:2px solid #538a7c}.compare .card:last-child{border-top:2px solid #7b71a5}
+.check{display:flex;gap:10px;align-items:flex-start;margin:9px 0}
+.dot{width:20px;height:20px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;flex:0 0 20px;background:#eaf4ee;color:var(--good);font-size:.78rem;font-weight:650;margin-top:2px}
+.dot.no{background:#fbeeee;color:var(--bad)}
+.quiz button{width:100%;text-align:left;border:1px solid var(--line);background:#ffffff;color:var(--ink);padding:11px 12px;border-radius:5px;margin:5px 0;cursor:pointer;line-height:1.5}
+.quiz button:hover{border-color:#7ea6cd;background:#f3f7fb}
+.feedback{min-height:28px;margin-top:8px;color:var(--muted)}
+.small{font-size:.88rem}.tiny{font-size:.78rem}.accent{color:var(--cyan)}.amber{color:var(--amber)}.mint{color:var(--mint)}.rose{color:var(--rose)}
+hr{border:0;border-top:1px solid var(--line);margin:32px 0}
+footer{border-top:1px solid var(--line);padding:24px 0 36px;color:var(--muted);font-size:.85rem}
+@media(max-width:1100px){.grid3{grid-template-columns:1fr}.grid3 .card{padding:18px}.layout{grid-template-columns:190px minmax(0,1fr);gap:26px}}
+@media(max-width:850px){.layout{grid-template-columns:1fr;gap:0}nav{position:relative;top:0;max-height:none;border-right:0;border-bottom:1px solid var(--line);padding:0 0 16px;margin-top:24px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:2px}nav .navtitle{grid-column:1/-1}.grid,.twoCol,.compare{grid-template-columns:1fr}.flow{grid-template-columns:1fr}.flowline .arr{display:none}main{padding-top:30px}}
+@media(max-width:520px){.shell{padding:0 18px}.hero{padding:34px 0 28px}h1{font-size:2rem}h2{font-size:1.5rem}.card,.interactive{padding:16px}th,td{padding:9px 8px;font-size:.79rem}table code{font-size:.86em}.cellmap{grid-template-columns:62px minmax(0,1fr)}.cellno,.celldesc{padding:9px}section{margin-bottom:36px;padding-bottom:24px}.flowline .node{flex-basis:100%}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+@media print{nav{display:none}.layout{display:block}.hero{padding:24px 0;background:#ffffff;color:var(--ink);border-color:var(--line)}.hero p,.eyebrow,.pill{color:var(--ink)}.pill{border-color:var(--line)}body{background:white;color:#17253b}.card,.details,.interactive,pre,.eq,table{break-inside:avoid}main{padding-top:24px}.shell{max-width:none;padding:0}section{margin-bottom:26px}}
+select{font:inherit;padding:7px 10px;border:1px solid var(--line);border-radius:5px;background:white;color:var(--ink);max-width:100%}
+figure{margin:22px 0}figcaption{font-size:.87rem;color:var(--muted);margin-top:10px}
+.diagram{width:100%;height:auto;display:block;background:#fbfcfe;border:1px solid var(--line);border-radius:7px}
+.diagram text{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;fill:#17253b}
+.diagram .sub{fill:#526174;font-size:12px}.diagram .heading{font-size:15px;font-weight:600}
+.readout{font-variant-numeric:tabular-nums}.demo-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 0}
+.readout .card{padding:12px}.readout strong{display:block;font-size:1.4rem}.readout span{font-size:.82rem}
+.signed-row{display:grid;grid-template-columns:115px 1fr 55px;gap:10px;align-items:center;margin:14px 0;font-size:.85rem}
+.signed-track{position:relative;height:21px;background:#edf1f5;border-radius:3px}.signed-track:after{position:absolute;left:50%;top:-3px;bottom:-3px;width:1px;background:#7c8da2;content:""}
+.signed-fill{position:absolute;height:100%;background:#598cb6;border-radius:2px}.signed-fill.negative{background:#af6b78}
+.split-bar{display:flex;height:35px;overflow:hidden;border-radius:5px;margin:12px 0}.split-bar span{display:flex;align-items:center;justify-content:center;color:white;font-size:.85rem;background:#2f648d}.split-bar span+span{background:#738ba3}
+.question{padding:14px 17px;border:1px solid var(--line);border-left:3px solid #7486a1;border-radius:4px;margin-top:24px}.question p{margin:0}.question details{margin-top:8px}.question summary{cursor:pointer;font-size:.85rem;color:var(--cyan)}
+.pipeline-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}.pipeline-grid .card{padding:16px}.pipeline-grid figure{margin:14px 0 0}
+.table-wrap{overflow-x:auto}.source-list{padding-left:20px;font-size:.85rem}.term{font-weight:600;color:var(--ink)}
+@media(max-width:850px){.pipeline-grid{grid-template-columns:1fr}.pipeline-grid .diagram{max-width:430px;margin:auto}}
+@media(max-width:520px){.demo-grid{grid-template-columns:1fr 1fr}.signed-row{grid-template-columns:90px 1fr 45px;gap:6px;font-size:.78rem}.diagram .sub{font-size:12px}}
+
+.quiz.card{margin:18px 0;padding:20px}.quiz.card h3{margin-top:0;font-size:1rem}.quiz-hint{font-size:.85rem;margin:10px 0}.quiz-hint summary{cursor:pointer;color:var(--cyan)}
+.quiz button[aria-pressed="true"]{border-color:#2462ad;background:#edf4fc}.quiz .feedback{margin:12px 0 0;padding:10px 0 0;border-top:1px solid var(--line)}
+.quiz .feedback:empty{display:none}.score-caption{font-size:.85rem}
+</style></head><body>
+<header class="hero"><div class="shell"><div class="eyebrow">Week 10 · Reinforcement learning</div><h1>SAC and PPO, one idea at a time</h1><p>A beginner-friendly guide to the walking problem, exploration, PPO clipping, GAE and learning from images. Small examples and visual pipelines connect each idea to the supplied notebooks.</p><div class="pills"><span class="pill">No prior RL knowledge assumed</span><span class="pill">Important code only</span><span class="pill">Interactive examples</span></div></div></header>
+<div class="shell layout"><nav aria-label="Guide sections"><div class="navtitle">Follow the learning story</div><a href="#problem">1. What problem are we solving?</a><a href="#basics">2. The actor, critic and their learning signals</a><a href="#sac">3. SAC: learn from memory and keep exploring</a><a href="#ppo">4. PPO: change the policy carefully</a><a href="#gae">5. GAE: decide how good each action was</a><a href="#atari">6. PPO with pictures: what the custom CNN adds</a><a href="#results">7. Read results and compare fairly</a><a href="#assignment">8. Brief connection to Assignment 2</a><a href="#pipelines">9. The two complete learning pipelines</a><a href="#questions">10. Check your understanding</a></nav><main><section id="problem"><h2>1. What problem are we solving?</h2>
+<p>Imagine a simulated robot with two legs. We want it to walk forward without falling. Nobody gives it a list of the correct movements. It has to discover useful movements by trying them and seeing what happens.</p>
+<div class="grid"><div class="card"><div class="kicker">What the robot receives</div><h3>Observation</h3><p>The walker receives <strong>24 numbers</strong> describing things such as its body angle, movement, leg joints and ground measurements. This is the information available for its next decision.</p></div><div class="card"><div class="kicker">What the robot chooses</div><h3>Action</h3><p>It outputs <strong>four continuous motor commands</strong>, each between −1 and 1, for the hips and knees. Continuous means it can choose intermediate amounts, rather than only “on” or “off”.</p></div></div>
+<p>The environment gives a <strong>reward</strong>: moving forward earns reward, motor effort has a small cost, and falling has a large penalty. An illustrative action such as <code>[0.2, −0.4, 0.1, 0.3]</code> means four motor commands, not four reward scores.</p>
+<div class="callout">Learn which movements lead to a good whole walk, even when the benefit or mistake becomes clear only several moments later.</div>
+<p>For example, lifting a leg may give little immediate reward, yet make the next step possible. Leaning forward may look useful immediately, yet cause a fall later. The learner must connect present decisions to future results.</p>
+<p>One <strong>step</strong> is one interaction. An <strong>episode</strong> is one complete attempt, from reset until it ends. Reinforcement learning, or <strong>RL</strong>, improves decisions using the rewards from these attempts.</p>
+<figure><svg class="diagram" viewBox="0 0 600 285" role="img" aria-labelledby="walking-loop-title walking-loop-desc"><title id="walking-loop-title">Learning by interacting</title><desc id="walking-loop-desc">The actor receives an observation and chooses motor commands. The environment supplies a reward and next observation. Experience is used to improve the actor and critic.</desc><defs><marker id="walking-loop-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#74879d"/></marker></defs><rect x="20" y="25" width="165" height="65" rx="6" fill="#f0f5fa" stroke="#cfd9e4"/><text class="heading" x="102.5" y="49" text-anchor="middle">Observation</text><text class="sub" x="102.5" y="69" text-anchor="middle">Body and leg information</text><rect x="218" y="25" width="165" height="65" rx="6" fill="#f0f5fa" stroke="#cfd9e4"/><text class="heading" x="300.5" y="49" text-anchor="middle">Actor</text><text class="sub" x="300.5" y="69" text-anchor="middle">Chooses motor commands</text><rect x="416" y="25" width="165" height="65" rx="6" fill="#f0f5fa" stroke="#cfd9e4"/><text class="heading" x="498.5" y="49" text-anchor="middle">Environment</text><text class="sub" x="498.5" y="69" text-anchor="middle">Moves the walker</text><path d="M185 57 L218 57" fill="none" stroke="#74879d" stroke-width="1.6" marker-end="url(#walking-loop-arrow)"/><path d="M383 57 L416 57" fill="none" stroke="#74879d" stroke-width="1.6" marker-end="url(#walking-loop-arrow)"/><rect x="320" y="155" width="260" height="65" rx="6" fill="#f0f5fa" stroke="#cfd9e4"/><text class="heading" x="450.0" y="179" text-anchor="middle">Experience</text><text class="sub" x="450.0" y="199" text-anchor="middle">Observation, action, reward, next state</text><rect x="20" y="155" width="250" height="65" rx="6" fill="#f0f5fa" stroke="#cfd9e4"/><text class="heading" x="145.0" y="179" text-anchor="middle">Learning update</text><text class="sub" x="145.0" y="199" text-anchor="middle">Improve actor and critic</text><path d="M499 90 L499 155" fill="none" stroke="#74879d" stroke-width="1.6" marker-end="url(#walking-loop-arrow)"/><text class="sub" x="475" y="126" text-anchor="middle">reward + next observation</text><path d="M320 187 L270 187" fill="none" stroke="#74879d" stroke-width="1.6" marker-end="url(#walking-loop-arrow)"/><path d="M145 155 L145 122 L300 122 L300 90" fill="none" stroke="#74879d" stroke-width="1.6" marker-end="url(#walking-loop-arrow)"/><text class="sub" x="148" y="116" text-anchor="middle">better decisions next time</text></svg><figcaption>SAC and PPO are two ways to perform the learning update in this interaction loop.</figcaption></figure>
+</section><section id="basics"><h2>2. The actor, critic and their learning signals</h2>
+<p>A <strong>policy</strong> is the rule that chooses an action from an observation. Here, a neural network learns that rule by adjusting its internal numbers, called weights.</p>
+<div class="grid"><div class="card"><h3>Actor: the decision maker</h3><p>“Given what I can see, which movement should I try?”</p><p>A stochastic actor describes a distribution of possible actions. It can sample different movements in the same situation.</p></div><div class="card"><h3>Critic: the predictor</h3><p>“How much future reward do I expect?”</p><p>It learns by comparing its predictions with targets built from the experience collected.</p></div></div>
+<div class="table-wrap"><table><thead><tr><th>Term</th><th>Plain meaning</th><th>Small example</th></tr></thead><tbody>
+<tr><td>Reward</td><td>Feedback from one step</td><td>This step earns +1.</td></tr>
+<tr><td>Return</td><td>Rewards added over time, usually discounted</td><td>Rewards 1, 1, 1 with γ = 0.9 give 1 + 0.9 + 0.81 = 2.71.</td></tr>
+<tr><td>Value, V(s)</td><td>Predicted return from a situation</td><td>“From this balanced pose, I expect 8.”</td></tr>
+<tr><td>Action value, Q(s, a)</td><td>Predicted return from a situation after choosing a particular action</td><td>“From this pose, trying this leg movement looks worth 10.”</td></tr>
+<tr><td>Advantage, A</td><td>How much better or worse an action looks than the usual expectation</td><td>Expected 8, estimated result 11: advantage +3. Result 5: advantage −3.</td></tr>
+</tbody></table></div>
+<p><strong>Gamma, γ</strong>, controls the weight of future rewards. A value near 1 keeps later rewards important. <strong>Learning rate</strong> controls the size of a weight adjustment. A <strong>batch</strong> is a small group of experiences used for one learning update. An <strong>epoch</strong> is one pass through the training data being reused.</p>
+<div class="callout">The actor chooses; the critic predicts. The learning signal tells the actor which choices to favour next time.</div>
+<p>In these notebooks, SAC uses two Q critics. PPO uses a V critic and advantages. They solve the same walking task using different learning signals and different rules for reusing data.</p>
+</section><section id="sac"><h2>3. SAC: learn from memory and keep exploring</h2>
+<p><strong>Soft Actor-Critic (SAC)</strong> trains an actor and two action-value critics. “Soft” refers to the entropy term: the learner values a useful range of possible actions alongside reward.</p>
+<h3>Start with a memory of attempts</h3>
+<p>After each interaction, SAC stores <code>(observation, action, reward, next observation, episode boundary)</code> in a <strong>replay buffer</strong>. It samples small batches from this memory to learn.</p>
+<p>Think of reviewing earlier practice attempts. An attempt can still teach you something after your technique changes. This reuse of data collected by older policies is called <strong>off-policy learning</strong>.</p>
+<h3>Why two critics?</h3>
+<p>Predictions can be too optimistic. Suppose one critic predicts 12 and the other predicts 8 for a movement. SAC uses the smaller estimate, 8, in its learning targets and actor objective. This helps reduce overestimation; it does not make every prediction correct.</p>
+<h3>Entropy: how spread out are the possible choices?</h3>
+<p>For a simple two-choice example, compare an actor that chooses left almost every time with an actor that gives left and right equal chances.</p>
+<div class="grid"><div class="card"><strong>Lower entropy</strong><div class="split-bar" role="img" aria-label="Left 90 percent, right 10 percent"><span style="width:90%">90% left</span><span style="width:10%">10%</span></div><p>One choice dominates. There is little variety.</p></div><div class="card"><strong>Higher entropy</strong><div class="split-bar" role="img" aria-label="Left 50 percent, right 50 percent"><span style="width:50%">50% left</span><span style="width:50%">50% right</span></div><p>Choices are more spread out. There is more variety.</p></div></div>
+<p>This picture uses two discrete choices to explain the idea. The walker actually uses a distribution over continuous motor commands.</p>
+<p><strong>Why include entropy?</strong> Early in training, one movement may look best simply because the robot has tried very few alternatives. Encouraging variety helps it avoid settling too early on a poor walking pattern.</p>
+<div class="eq">Actor goal ≈ high predicted return + α × entropy</div>
+<p><strong>Alpha, α</strong>, balances the two terms. A larger alpha gives variety more weight. In Part A, <code>ent_coef="auto"</code> learns alpha to track a target entropy. This is an exploration setting, not a bonus physically paid by the environment.</p>
+<details class="details"><summary>Optional: what the entropy formula means</summary><div class="inside"><div class="eq">H = −Σ p(a) log p(a)</div><p>For discrete actions, compute this across possible actions. A 50/50 distribution has more entropy than 90/10. For the walker’s continuous actions, SAC uses log probability <em>density</em> instead; the numbers are not ordinary probabilities and entropy need not be positive.</p></div></details>
+<h3>How one learning update works</h3>
+<ol><li><strong>Sample stored transitions.</strong> Each transition says what happened after an action.</li><li><strong>Train both critics.</strong> Their target includes the observed reward and an estimate of what can happen next.</li><li><strong>Train the actor.</strong> Favour actions with high predicted Q while retaining entropy.</li><li><strong>Update the supporting estimates.</strong> Slowly move target critics towards the trained critics, and adjust alpha when automatic tuning is enabled.</li></ol>
+
+<h3>Why do we need target critics?</h3>
+<p>A critic predicts future return. To improve that prediction, we need a number to compare it with: a <strong>training target</strong>. Part of that target is the reward we observed; the rest comes from a prediction of what can happen next.</p>
+<p>This creates a difficulty: <strong>we are using predictions to train predictions.</strong> If the same rapidly changing network supplies both sides, changing its weights can change the answer it is trying to learn. An overly optimistic prediction can feed into the next target and reinforce itself.</p>
+<h4>A small example of the moving target</h4>
+<p>Consider reward 1 and γ = 0.9. Leave out the entropy term here to focus on the future-value prediction.</p>
+<div class="table-wrap"><table><thead><tr><th>What happens</th><th>Next-state Q estimate</th><th>Target for this transition</th></tr></thead><tbody>
+<tr><td>Before an update</td><td>10</td><td>1 + 0.9 × 10 = 10</td></tr>
+<tr><td>The trained critic’s next-state estimate jumps</td><td>20</td><td>Using that changing critic directly gives 1 + 0.9 × 20 = 19.</td></tr>
+<tr><td>Use a slower target copy instead</td><td>The target copy changes more gradually.</td><td>The target is less exposed to that sudden weight change.</td></tr>
+</tbody></table></div>
+<p>The observed transition has not changed, yet the target could jump from 10 to 19. A <strong>target critic</strong> is a separate copy that follows the trained critic slowly. It supplies the future Q estimate, giving the trained critic a steadier reference to learn towards.</p>
+<figure><svg class="diagram" viewBox="0 0 600 300" role="img" aria-labelledby="target-critic-loop-title target-critic-loop-desc"><title id="target-critic-loop-title">Why SAC has target critics</title><desc id="target-critic-loop-desc">The trained critics learn using a target built with slowly updated target copies. The copies follow the trained critics through small weight updates, reducing rapid feedback in the target.</desc><defs><marker id="target-critic-loop-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#74879d"/></marker></defs><rect x="20" y="25" width="240" height="65" rx="6" fill="#f0f5fa" stroke="#cfd9e4"/><text class="heading" x="140.0" y="49" text-anchor="middle">Trained critics: Q1 and Q2</text><text class="sub" x="140.0" y="69" text-anchor="middle">Weights change with learning</text><rect x="340" y="25" width="240" height="65" rx="6" fill="#f0f7f4" stroke="#cfd9e4"/><text class="heading" x="460.0" y="49" text-anchor="middle">Target copies: Q1 and Q2</text><text class="sub" x="460.0" y="69" text-anchor="middle">Weights follow slowly</text><path d="M260 58 L340 58" fill="none" stroke="#74879d" stroke-width="1.6" marker-end="url(#target-critic-loop-arrow)"/><text class="sub" x="300" y="40" text-anchor="middle">small update</text><rect x="340" y="175" width="240" height="65" rx="6" fill="#f0f5fa" stroke="#cfd9e4"/><text class="heading" x="460.0" y="199" text-anchor="middle">Build the training target</text><text class="sub" x="460.0" y="219" text-anchor="middle">Reward + estimated future return</text><rect x="20" y="175" width="240" height="65" rx="6" fill="#f0f5fa" stroke="#cfd9e4"/><text class="heading" x="140.0" y="199" text-anchor="middle">Train the critics</text><text class="sub" x="140.0" y="219" text-anchor="middle">Move predictions towards target</text><path d="M460 90 L460 175" fill="none" stroke="#74879d" stroke-width="1.6" marker-end="url(#target-critic-loop-arrow)"/><text class="sub" x="460" y="135" text-anchor="middle">next-state Q estimates</text><path d="M340 207 L260 207" fill="none" stroke="#74879d" stroke-width="1.6" marker-end="url(#target-critic-loop-arrow)"/><path d="M140 175 L140 90" fill="none" stroke="#74879d" stroke-width="1.6" marker-end="url(#target-critic-loop-arrow)"/><text class="sub" x="300" y="278" text-anchor="middle">The target copies follow the learner gradually.</text></svg><figcaption>The critics being trained change quickly. Their target copies move gradually. This reduces rapid feedback between changing predictions and changing training targets.</figcaption></figure>
+<h4>How does the target copy move?</h4>
+<div class="eq">target weight ← (1 − τ) × old target weight + τ × trained critic weight</div>
+<p>Part A uses <code>tau=0.02</code>: keep 98% of the old target weight and mix in 2% of the trained weight. For one illustrative weight, if the target has 8 and the trained critic has 12:</p>
+<div class="eq">new target weight = 0.98 × 8 + 0.02 × 12 = <b>8.08</b></div>
+<p>The copy moves towards 12 rather than jumping straight to it. These numbers illustrate a <strong>network weight</strong>; the full network’s Q output is not necessarily the same weighted average.</p>
+<div class="grid"><div class="card"><h4>Two trained critics</h4><p>Learn Q values from batches. Using the smaller Q estimate helps reduce overestimation.</p></div><div class="card"><h4>Two target copies</h4><p>Follow those critics slowly. They supply next-state Q estimates when building critic targets.</p></div></div>
+<p>The actor is trained using the <strong>current trained critics</strong>. Target critics support critic learning; they do not choose the robot’s movement. They make the Q part of the target steadier, while the actor and entropy coefficient can still change.</p>
+
+<details class="details"><summary>Optional: connect that explanation to the SAC target</summary><div class="inside"><div class="eq">target = reward + γ × [min(target_Q1, target_Q2) − α × log π(next_action | next_state)]</div><p>The next action is sampled from the current actor. Both target Q values evaluate it. At a true terminal state there is no future term. Time-limit truncations need appropriate bootstrapping and are handled by the library.</p></div></details>
+<h3>Important Part A code</h3><p class="small">Condensed from the notebook, with configuration values written directly. Run within the notebook’s imports and environment setup; this is not a standalone program.</p>
+<pre><code>model = SAC(
+    &quot;MlpPolicy&quot;, env,
+    buffer_size=300_000, batch_size=256,
+    learning_starts=10_000,
+    train_freq=64, gradient_steps=64,
+    learning_rate=0.00073, gamma=0.98,
+    ent_coef=&quot;auto&quot;, tau=0.02, use_sde=True,
+)
+model.learn(total_timesteps=100_000)</code></pre>
+<p><code>MlpPolicy</code> uses a network suitable for numerical observations. The buffer can hold 300,000 transitions; a batch uses 256. Critic and actor training starts after 10,000 collected steps. The configured cycle collects 64 steps and performs 64 gradient steps. <code>use_sde=True</code> enables state-dependent exploration.</p>
+
+</section><section id="ppo"><h2>4. PPO: change the policy carefully</h2>
+<p><strong>Proximal Policy Optimisation (PPO)</strong> collects a recent batch of experience, called a <strong>rollout</strong>. It then learns from that batch several times before collecting fresh experience.</p>
+<h3>Why can a large policy change be a problem?</h3>
+<p>Imagine the robot tries a leg movement during a few successful walks. That movement looks useful, so we want it to become more likely. But a small batch cannot tell us that it should become almost the only movement the robot ever tries.</p>
+<p>If we make it much more likely after just those attempts, the robot may lose other useful movements and start falling. PPO therefore limits how much extra improvement a sample can claim from a large change. This matters because PPO makes several learning passes through the same recent data.</p>
+<h3>First understand the ratio</h3>
+<p>Choose one observation and one action that was actually sampled. Compare how likely that same action is under the new policy and the policy that collected the rollout.</p>
+<div class="eq">ratio = new likelihood ÷ old likelihood</div>
+<div class="table-wrap"><table><thead><tr><th>Old probability</th><th>New probability</th><th>Ratio</th><th>Meaning</th></tr></thead><tbody>
+<tr><td>20%</td><td>20%</td><td>1.00</td><td>Unchanged</td></tr><tr><td>20%</td><td>22%</td><td>1.10</td><td>10% more likely relative to the old policy</td></tr><tr><td>20%</td><td>30%</td><td>1.50</td><td>50% more likely relative to the old policy</td></tr></tbody></table></div>
+<p>These are discrete probabilities to make the arithmetic visible. The walker has continuous actions, so its policy uses probability <em>densities</em>. The same ratio idea applies.</p>
+<h3>What does “clip” mean?</h3>
+<p>To clip a number is to replace values beyond an interval with the nearest endpoint. Part B sets <code>clip_range=0.18</code>, giving endpoints <strong>1 − 0.18 = 0.82</strong> and <strong>1 + 0.18 = 1.18</strong>.</p>
+<div class="table-wrap"><table><thead><tr><th>Actual ratio</th><th>Clipped copy</th><th>What the clipping calculation does</th></tr></thead><tbody>
+<tr><td>0.60</td><td>0.82</td><td>Below the lower endpoint: use 0.82 in the clipped branch.</td></tr><tr><td>1.10</td><td>1.10</td><td>Inside the interval: keep it.</td></tr><tr><td>1.50</td><td>1.18</td><td>Above the upper endpoint: use 1.18 in the clipped branch.</td></tr></tbody></table></div>
+<p><strong>The 18% is a relative change in likelihood.</strong> Starting from 20%, the upper endpoint corresponds to 20% × 1.18 = 23.6%, rather than adding 18 percentage points to make 38%.</p>
+<h3>Where is the clipped number used?</h3>
+<p>PPO uses it to calculate a <strong>learning score</strong>. The optimiser changes the actor’s weights to improve this score. A score is a mathematical training signal, not the reward returned by the environment.</p>
+<p>The <strong>advantage</strong> judges the sampled action: positive means better than expected, negative means worse than expected. PPO calculates two versions of the actor score:</p>
+<ol><li><strong>Ordinary:</strong> actual ratio × advantage.</li><li><strong>Clipped:</strong> clipped copy of the ratio × advantage.</li><li><strong>Choose the smaller score.</strong> This prevents the objective from offering extra improvement for a helpful-looking change that has gone too far.</li></ol>
+<h3>Follow one good action all the way through</h3>
+<p>Old probability = 20%, new probability = 30%, advantage = +2.</p>
+<div class="grid"><div class="card"><div class="kicker">1. Compare probabilities</div><h3>30 ÷ 20 = 1.50</h3><p>The sampled action has become 50% more likely.</p></div><div class="card"><div class="kicker">2. Make the clipped copy</div><h3>1.50 becomes 1.18</h3><p>This copy is used in the second score calculation.</p></div><div class="card"><div class="kicker">3. Calculate both scores</div><h3>3.00 and 2.36</h3><p>Ordinary: 1.50 × 2 = 3.00.<br>Clipped: 1.18 × 2 = 2.36.</p></div><div class="card"><div class="kicker">4. Choose the smaller</div><h3>PPO uses 2.36</h3><p>The extra increase beyond the endpoint earns no extra actor score for this sample.</p></div></div>
+<div class="callout"><strong>The new probability can still be 30%.</strong> PPO has capped this sample’s learning score at 2.36. It has not reset the policy probability to 23.6%, and it has not clipped a motor command.</div>
+<h3>Compare small and large changes</h3>
+<div class="table-wrap"><table><thead><tr><th>New probability</th><th>Actual ratio</th><th>Ordinary score, A = +2</th><th>PPO score</th></tr></thead><tbody>
+<tr><td>20%</td><td>1.00</td><td>2.00</td><td>2.00</td></tr><tr><td>22%</td><td>1.10</td><td>2.20</td><td>2.20</td></tr><tr><td>23.6%</td><td>1.18</td><td>2.36</td><td>2.36</td></tr><tr><td>30%</td><td>1.50</td><td>3.00</td><td><strong>2.36</strong></td></tr><tr><td>40%</td><td>2.00</td><td>4.00</td><td><strong>2.36</strong></td></tr></tbody></table></div>
+<p>A small increase still improves the score. Beyond the endpoint, a larger increase gives no extra benefit for this sample. That removes the pressure from this sample to keep increasing an action’s likelihood based on the same limited evidence.</p>
+<div class="interactive" id="ppo-demo"><div class="kicker">Change the probability and watch the score</div><h3>Where does the blue score stop improving?</h3>
+<label for="new-prob">New probability: <output id="prob-output" for="new-prob">30%</output> (old probability stays 20%)</label><input id="new-prob" type="range" min="5" max="45" step="1" value="30">
+<label for="advantage">Advantage of this action</label><select id="advantage"><option value="2">+2: better than expected</option><option value="-2">−2: worse than expected</option></select>
+<figure><svg class="diagram" viewBox="0 0 600 295" role="img" aria-labelledby="ppo-score-plot-title ppo-score-plot-desc"><title id="ppo-score-plot-title">PPO actor score as the policy changes</title><desc id="ppo-score-plot-desc">A dashed line shows the ordinary score. A blue line shows the smaller of the ordinary and clipped scores. The blue line flattens when a helpful change exceeds the relevant endpoint.</desc><defs><marker id="ppo-score-plot-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#74879d"/></marker></defs><rect x="252.222" y="40" width="80" height="160" fill="#edf3f8"/><path d="M70 40 L70 200 L570 200" fill="none" stroke="#a3b1c0"/><path d="M252.2222222222222 40 L252.2222222222222 200" fill="none" stroke="#d6dfe8" stroke-dasharray="3 4"/><text class="sub" x="252.2222222222222" y="221" text-anchor="middle">0.82</text><path d="M292.2222222222222 40 L292.2222222222222 200" fill="none" stroke="#d6dfe8" stroke-dasharray="3 4"/><text class="sub" x="292.2222222222222" y="221" text-anchor="middle">1.00</text><path d="M332.2222222222222 40 L332.2222222222222 200" fill="none" stroke="#d6dfe8" stroke-dasharray="3 4"/><text class="sub" x="332.2222222222222" y="221" text-anchor="middle">1.18</text><path d="M514.4444444444443 40 L514.4444444444443 200" fill="none" stroke="#d6dfe8" stroke-dasharray="3 4"/><text class="sub" x="514.4444444444443" y="221" text-anchor="middle">2.00</text><text class="sub" x="320" y="245" text-anchor="middle">New likelihood ÷ old likelihood</text><text class="sub" x="75" y="25">Actor score: higher is better</text><text id="plot-selection" class="sub" x="570" y="25" text-anchor="end">Selected ratio: 1.50</text><text id="plot-zero" class="sub" x="57" y="205" text-anchor="end">0</text><text id="plot-limit" class="sub" x="57" y="45" text-anchor="end">4.5</text><polyline id="plot-ordinary" fill="none" stroke="#9aa8b7" stroke-width="2" stroke-dasharray="5 4" points="70,200 570,40"/><polyline id="plot-chosen" fill="none" stroke="#2462ad" stroke-width="3" points="70,200 332.222,116.089 570,116.089"/><line id="plot-marker" x1="403.333" y1="40" x2="403.333" y2="200" stroke="#8a6684" stroke-width="1.3"/><circle id="plot-point" cx="403.333" cy="116.089" r="5" fill="#2462ad"/><path d="M78 275 L108 275" stroke="#9aa8b7" stroke-width="2" stroke-dasharray="5 4"/><text class="sub" x="117" y="279">Ordinary score</text><path d="M300 275 L330 275" stroke="#2462ad" stroke-width="3"/><text class="sub" x="339" y="279">PPO score</text></svg><figcaption>The shaded band is the clip interval, 0.82 to 1.18. The purple line marks the selected ratio. The blue score flattens where this sample receives no extra improvement. Switch the advantage sign to see the other direction.</figcaption></figure><div class="demo-grid readout"><div class="card"><span>Actual ratio</span><strong id="actual-ratio">1.50</strong></div><div class="card"><span>Clipped copy of ratio</span><strong id="clipped-ratio">1.18</strong></div></div>
+<div class="signed-row"><span>Ordinary score</span><div class="signed-track"><div id="ordinary-bar" class="signed-fill"></div></div><output id="ordinary-score">3.00</output></div>
+<div class="signed-row"><span>Clipped score</span><div class="signed-track"><div id="clipped-bar" class="signed-fill"></div></div><output id="clipped-score">2.36</output></div>
+<div class="signed-row"><strong>PPO uses min</strong><div class="signed-track"><div id="chosen-bar" class="signed-fill"></div></div><output id="chosen-score">2.36</output></div>
+<p id="ppo-explanation" aria-live="polite"></p><p class="tiny">The vertical line marks zero. Left is negative, right is positive. This is a discrete probability illustration; the continuous walker policy uses probability densities.</p></div>
+<h3>What if the action was worse than expected?</h3>
+<p>For a bad action, we want its likelihood to decrease. Use advantage −2, old probability 20% and new probability 12%. The ratio is 12 ÷ 20 = 0.60.</p>
+<div class="eq">Ordinary score = 0.60 × (−2) = −1.20<br>Clipped score = 0.82 × (−2) = −1.64<br>PPO chooses min(−1.20, −1.64) = <b>−1.64</b></div>
+<p>Higher scores are better, including when scores are negative. Without clipping, reducing the bad action’s probability further would keep making the score less negative. PPO caps that improvement once the ratio falls below 0.82.</p>
+<p><strong>Why keep both scores and take the minimum?</strong> If a bad action becomes more likely instead, its ordinary score becomes worse. PPO keeps that penalty. It caps overly large changes in the direction that looks helpful, while preserving the penalty for moving in the wrong direction.</p>
+<div class="table-wrap"><table><thead><tr><th>Advantage</th><th>Helpful change</th><th>Where improvement flattens</th></tr></thead><tbody><tr><td>Positive</td><td>Make the action more likely</td><td>Ratio above 1.18</td></tr><tr><td>Negative</td><td>Make the action less likely</td><td>Ratio below 0.82</td></tr></tbody></table></div>
+<p>Other samples and shared network weights can still move the policy beyond these endpoints. Clipping removes an incentive for large changes in this objective; it does not impose a hard probability boundary or guarantee better performance.</p>
+<h3>The four lines that explain clipping</h3><p class="small">Core actor-objective logic used inside PPO, shown for explanation. <code>advantages</code> are normally normalised in these SB3 runs. This is not code to paste beside <code>model.learn()</code>.</p>
+<pre><code>ratio = torch.exp(log_prob - old_log_prob)
+ordinary = ratio * advantages
+clipped = torch.clamp(ratio, 1 - clip_range, 1 + clip_range) * advantages
+policy_loss = -torch.min(ordinary, clipped).mean()</code></pre>
+<p><code>log_prob</code> stores the new log likelihood; <code>old_log_prob</code> stores the fixed old one. Exponentiating their difference gives the ratio. The minus sign turns a score to maximise into a loss to minimise. This is the actor term; PPO also trains the value critic and can include an entropy term.</p>
+
+</section><section id="gae"><h2>5. GAE: decide how good each action was</h2>
+<p>PPO needs an advantage for each action: <strong>was this choice better or worse than we expected?</strong> We cannot judge every action from its immediate reward alone because its effects may appear later.</p>
+<p><strong>Generalised Advantage Estimation (GAE)</strong> builds that judgement by combining prediction errors from nearby steps. The calculation has two steps.</p>
+<h3>Step 1: calculate the one-step surprise</h3>
+<div class="eq">surprise δ = reward + γ × predicted next value − predicted current value</div>
+<p>Suppose the critic predicted <strong>8</strong> before the movement. The movement earns <strong>1</strong>, and the critic predicts <strong>10</strong> from the next position. With γ = 0.9:</p>
+<div class="eq">δ = 1 + 0.9 × 10 − 8 = +2</div>
+<p>The result looks 2 better than the critic expected. This <strong>temporal-difference error</strong> is a useful signal, but it depends on an imperfect next-value prediction.</p>
+<h3>Step 2: combine several surprises</h3>
+<p>Use surprises <strong>+2, +1, −1</strong> from three successive steps. To make the arithmetic easy, give each later step half the weight of the previous one:</p>
+<div class="eq">advantage estimate = 2 + 0.5 × 1 + 0.25 × (−1) = <b>2.25</b></div>
+<p>The positive middle surprise helps the first action; the later negative surprise reduces that judgement. This connects a movement with consequences that appear after it.</p>
+<div class="interactive" id="gae-demo"><div class="kicker">Visualise the weighted contributions</div><h3>How much should later surprises count?</h3><label for="gae-weight">Later-step weight q = γ × λ: <output id="weight-output" for="gae-weight">0.50</output></label><input id="gae-weight" type="range" min="0" max="1" step="0.05" value="0.5">
+<div class="signed-row"><span>Now: +2</span><div class="signed-track"><div id="gae-now-bar" class="signed-fill"></div></div><output id="gae-now">2.00</output></div>
+<div class="signed-row"><span>Next: q × 1</span><div class="signed-track"><div id="gae-next-bar" class="signed-fill"></div></div><output id="gae-next">0.50</output></div>
+<div class="signed-row"><span>Later: q² × −1</span><div class="signed-track"><div id="gae-later-bar" class="signed-fill negative"></div></div><output id="gae-later">−0.25</output></div>
+<p class="readout">Total estimated advantage: <strong id="gae-total">2.25</strong></p><p class="tiny">This three-step example ends after the last surprise. Its default q = 0.5 is chosen for easy arithmetic, not taken from the notebook.</p></div>
+<h3>What does lambda do?</h3>
+<p><strong>Lambda, λ</strong>, controls how much GAE includes later errors. With λ = 0, it uses only the one-step error. A value closer to 1 includes more of the later evidence.</p>
+<p>Using more future evidence reduces reliance on the critic’s immediate prediction, but also brings in more variation from what happened later. Lambda balances those two effects. Gamma still controls discounting; the weight between successive errors is their product, γλ.</p>
+<p>Part B uses γ = 0.999 and λ = 0.95, so the actual multiplier is <strong>0.94905</strong>. GAE is calculated separately across episode boundaries so one attempt is not mixed with the next.</p>
+<details class="details"><summary>Equation and the backward calculation</summary><div class="inside"><p><code>continues[t]</code> is 0 at an episode boundary and 1 otherwise. <code>next_values[t]</code> is 0 at true termination; where the task can continue, it uses the critic’s next-state estimate.</p><div class="eq">Aₜ = δₜ + (γλ)δₜ₊₁ + (γλ)²δₜ₊₂ + …<br>Equivalent backward calculation: Aₜ = δₜ + γλ × Aₜ₊₁</div>
+<pre><code># Work backwards through the rollout
+advantage = 0
+for t in reversed(range(len(rewards))):
+    delta = rewards[t] + gamma * next_values[t] - values[t]
+    advantage = delta + gamma * gae_lambda * continues[t] * advantage
+    advantages[t] = advantage
+returns = advantages + values</code></pre>
+</div></details>
+<p><strong>Who uses the result?</strong> The actor uses the advantage to favour or discourage a sampled action. The critic learns to predict a return target, built here as <code>advantage + old value</code>. A positive advantage does not mean an action is always good, only that it looks better than the current baseline in this data.</p>
+
+<h3>Important Part B code</h3><p class="small">Condensed from the notebook; its <code>env</code> includes observation normalisation.</p>
+<pre><code>model = PPO(
+    &quot;MlpPolicy&quot;, env,
+    n_steps=2048, batch_size=64, n_epochs=10,
+    learning_rate=0.0003, gamma=0.999,
+    gae_lambda=0.95, clip_range=0.18, ent_coef=0.0,
+)
+model.learn(total_timesteps=500_000)</code></pre>
+<p>With one environment, the rollout contains 2,048 steps. Batches of 64 make 32 batches per epoch. Ten epochs mean 320 minibatch updates per rollout. The old likelihoods stay fixed throughout those passes. <code>ent_coef=0.0</code> removes PPO’s explicit entropy-loss term; the policy can still sample actions.</p>
+</section><section id="atari"><h2>6. PPO with pictures: what the custom CNN adds</h2>
+<p>Part C still uses <strong>PPO</strong>. What changes is the observation: the agent sees Pong images rather than a vector of body measurements. A <strong>convolutional neural network (CNN)</strong> turns those images into useful numerical features.</p>
+<p>A convolution applies a small learned filter across an image. Different filters can learn useful patterns such as edges, paddle locations or ball-related features. The network learns which patterns matter from the training signal; we do not manually label each object.</p>
+<h3>Why stack four frames?</h3>
+<p>One image shows where the ball is. Several recent images help reveal where it is moving. If its horizontal position is 20, 24, 28, 32 across four frames, it is moving right. If the order is 32, 28, 24, 20, it is moving left.</p>
+<figure><svg class="diagram" viewBox="0 0 600 240" role="img" aria-labelledby="cnn-flow-title cnn-flow-desc"><title id="cnn-flow-title">Pixels become useful features</title><desc id="cnn-flow-desc">Four stacked frames enter a CNN. The CNN creates 512 features used by both an actor and a value critic.</desc><defs><marker id="cnn-flow-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#74879d"/></marker></defs><rect x="20" y="30" width="165" height="65" rx="6" fill="#f0f5fa" stroke="#cfd9e4"/><text class="heading" x="102.5" y="54" text-anchor="middle">4 recent frames</text><text class="sub" x="102.5" y="74" text-anchor="middle">Position + motion</text><rect x="218" y="30" width="165" height="65" rx="6" fill="#f0f5fa" stroke="#cfd9e4"/><text class="heading" x="300.5" y="54" text-anchor="middle">CNN</text><text class="sub" x="300.5" y="74" text-anchor="middle">Finds useful patterns</text><rect x="416" y="30" width="165" height="65" rx="6" fill="#f0f5fa" stroke="#cfd9e4"/><text class="heading" x="498.5" y="54" text-anchor="middle">512 features</text><text class="sub" x="498.5" y="74" text-anchor="middle">Compact description</text><path d="M185 62 L218 62" fill="none" stroke="#74879d" stroke-width="1.6" marker-end="url(#cnn-flow-arrow)"/><path d="M383 62 L416 62" fill="none" stroke="#74879d" stroke-width="1.6" marker-end="url(#cnn-flow-arrow)"/><rect x="215" y="155" width="160" height="60" rx="6" fill="#f0f5fa" stroke="#cfd9e4"/><text class="heading" x="295.0" y="179" text-anchor="middle">Actor</text><text class="sub" x="295.0" y="199" text-anchor="middle">Choose a game action</text><rect x="416" y="155" width="165" height="60" rx="6" fill="#f0f5fa" stroke="#cfd9e4"/><text class="heading" x="498.5" y="179" text-anchor="middle">Value critic</text><text class="sub" x="498.5" y="199" text-anchor="middle">Predict future return</text><path d="M498 95 L498 125 L295 125 L295 155" fill="none" stroke="#74879d" stroke-width="1.6" marker-end="url(#cnn-flow-arrow)"/><path d="M498 95 L498 155" fill="none" stroke="#74879d" stroke-width="1.6" marker-end="url(#cnn-flow-arrow)"/></svg><figcaption>The CNN supplies features to PPO’s actor and critic. Clipping and GAE still perform the same jobs.</figcaption></figure>
+<div class="table-wrap"><table><thead><tr><th>Stage</th><th>Shape in this setup</th><th>Job</th></tr></thead><tbody><tr><td>Stacked observation</td><td>4 × 84 × 84</td><td>Four processed image frames</td></tr><tr><td>Convolution 1</td><td>32 × 20 × 20</td><td>32 learned feature maps</td></tr><tr><td>Convolution 2</td><td>64 × 9 × 9</td><td>Combine earlier patterns</td></tr><tr><td>Convolution 3</td><td>64 × 7 × 7</td><td>More compact feature maps</td></tr><tr><td>Flatten + linear</td><td>3,136 → 512</td><td>A feature vector for the policy and value networks</td></tr></tbody></table></div>
+<h3>Keep the important CNN code</h3><p class="small">Core excerpt from <code>CustomCNN</code>; the surrounding class and <code>n_flatten</code> calculation are in the notebook.</p>
+<pre><code>self.cnn = nn.Sequential(
+    nn.Conv2d(observation_space.shape[0], 32, kernel_size=8, stride=4),
+    nn.ReLU(),
+    nn.Conv2d(32, 64, kernel_size=4, stride=2), nn.ReLU(),
+    nn.Conv2d(64, 64, kernel_size=3, stride=1), nn.ReLU(),
+    nn.Flatten(),
+)
+self.linear = nn.Sequential(nn.Linear(n_flatten, 512), nn.ReLU())
+
+def forward(self, observations):
+    return self.linear(self.cnn(observations))</code></pre>
+<p><code>kernel_size</code> is the filter’s width and height. <code>stride</code> is how far it moves each time. <code>ReLU</code> introduces a nonlinear transformation so the network can learn more than a single linear mapping. <code>Flatten</code> turns the feature maps into a vector. The linear layer converts that vector to 512 features.</p>
+<h3>Connect the CNN to PPO</h3><p class="small">Condensed Part C setup. The game name is the one used in the supplied notebook; available environment IDs depend on the installed Atari package.</p>
+<pre><code>env = make_atari_env(&quot;PongNoFrameskip-v4&quot;, n_envs=8, seed=0)
+env = VecFrameStack(env, n_stack=4)
+model = PPO(
+    &quot;CnnPolicy&quot;, env,
+    policy_kwargs={&quot;features_extractor_class&quot;: CustomCNN},
+    n_steps=128, batch_size=256, n_epochs=4,
+    learning_rate=2.5e-4, clip_range=0.1,
+    ent_coef=0.01, vf_coef=0.5,
+)
+model.learn(total_timesteps=100_000)</code></pre>
+<p>Eight environments each collect 128 steps, giving <strong>1,024 transitions</strong> per rollout. With batch size 256 and four epochs, that is 16 minibatch updates. Eight environment instances do not necessarily mean eight separate processes.</p>
+<p><code>ent_coef=0.01</code> adds an exploration term to PPO’s loss. <code>vf_coef=0.5</code> weights the critic’s prediction loss. Here, the clip interval is 0.9 to 1.1. The CNN changes how observations are represented, while PPO controls how the policy learns.</p>
+
+</section><section id="results"><h2>7. Read results and compare fairly</h2>
+<p><code>model.learn()</code> interacts with the environment and updates weights. <code>model.predict()</code> chooses an action from an observation. <code>model.save()</code> stores the model for later use. Installation, video display and callback boilerplate support the workflow, but do not explain how the algorithms learn.</p>
+<div class="table-wrap"><table><thead><tr><th>Result or log</th><th>How to explain it</th></tr></thead><tbody><tr><td>Episode reward / <code>ep_rew_mean</code></td><td>Total reward over complete attempts, usually averaged. Higher is desirable, but check several evaluation episodes.</td></tr><tr><td><code>ep_len_mean</code></td><td>Average attempt length. A longer episode might mean surviving longer, but does not automatically mean better walking.</td></tr><tr><td><code>clip_fraction</code></td><td>Fraction of sampled ratios outside the clip interval. It does not mean motor commands were clipped or every one of these samples was on the objective’s flat branch.</td></tr><tr><td><code>approx_kl</code></td><td>A diagnostic of how much the new policy differs from the old one.</td></tr><tr><td><code>explained_variance</code></td><td>How well the critic accounts for variation in its return targets. It is a prediction diagnostic, not a walking score.</td></tr></tbody></table></div>
+<p>A smoothed reward curve makes the trend easier to see but can hide individual failures. Part A smooths over 50 episode returns. Pair the curve with several evaluation attempts and videos showing early and later behaviour.</p>
+<div class="table-wrap"><table><thead><tr><th>Notebook</th><th>Data used for learning</th><th>Requested training budget</th></tr></thead><tbody><tr><td>A: SAC, walker</td><td>Replay samples, batch 256</td><td>100,000 environment steps</td></tr><tr><td>B: PPO, walker</td><td>Recent rollout, 2,048 transitions</td><td>500,000 environment steps</td></tr><tr><td>C: PPO + CNN, Pong</td><td>Recent rollout, 1,024 transitions</td><td>100,000 aggregate environment steps</td></tr></tbody></table></div>
+<p>PPO completes whole rollouts, so the final step count may slightly exceed the requested budget. An environment step is not an episode or a gradient update.</p>
+<p><strong>Fair comparison:</strong> Parts A and B use different budgets and preprocessing, so one final score alone cannot establish which algorithm is better. Compare the same task, evaluation method, step budget and several seeds. Pong and walker reward scales are different.</p>
+</section><section id="assignment"><h2>8. Brief connection to Assignment 2</h2>
+<p>Use these notebooks to understand the workflow: define observations and actions, build a policy, train it, evaluate it, then explain the evidence. For Assignment 2, follow the specification’s permitted environments and algorithm requirements. The walker and Pong demonstrations here are teaching examples, not substitutes for the required tasks.</p>
+<p>When writing your explanation, connect each design choice to its job: the CNN processes images, entropy supports exploration, GAE estimates advantages, and PPO clipping moderates the actor objective.</p>
+</section><section id="pipelines"><h2>9. The two complete learning pipelines</h2>
+<p>Follow each diagram from top to bottom, then use the loop on the right to return to interaction. The two branches show the actor and critics learning from the same experience in different ways.</p>
+<div class="pipeline-grid"><div class="card"><div class="kicker">Stored attempts</div><h3>SAC</h3><p>Reuse memory. Learn action values. Balance predicted return and exploration.</p><figure><svg class="diagram" viewBox="0 0 400 650" role="img" aria-labelledby="pipeline-sac-title pipeline-sac-desc"><title id="pipeline-sac-title">SAC learning pipeline</title><desc id="pipeline-sac-desc">Follow the numbered stages from interaction to learning and back to fresh interaction. Branches show how the actor and critics learn.</desc><defs><marker id="pipeline-sac-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#74879d"/></marker></defs><rect x="50" y="25" width="300" height="62" rx="6" fill="#f0f5fa" stroke="#cfd9e4"/><text class="heading" x="200.0" y="49" text-anchor="middle">1. Actor chooses an action</text><text class="sub" x="200.0" y="69" text-anchor="middle">Sample motor commands</text><rect x="50" y="112" width="300" height="62" rx="6" fill="#f0f5fa" stroke="#cfd9e4"/><text class="heading" x="200.0" y="136" text-anchor="middle">2. Walker moves</text><text class="sub" x="200.0" y="156" text-anchor="middle">Receive reward and next observation</text><rect x="50" y="199" width="300" height="62" rx="6" fill="#f0f5fa" stroke="#cfd9e4"/><text class="heading" x="200.0" y="223" text-anchor="middle">3. Store the transition</text><text class="sub" x="200.0" y="243" text-anchor="middle">Replay memory keeps past attempts</text><rect x="50" y="286" width="300" height="62" rx="6" fill="#f0f5fa" stroke="#cfd9e4"/><text class="heading" x="200.0" y="310" text-anchor="middle">4. Sample a small batch</text><text class="sub" x="200.0" y="330" text-anchor="middle">Old and recent attempts can mix</text><path d="M200 87 L200 112" fill="none" stroke="#74879d" stroke-width="1.6" marker-end="url(#pipeline-sac-arrow)"/><path d="M200 174 L200 199" fill="none" stroke="#74879d" stroke-width="1.6" marker-end="url(#pipeline-sac-arrow)"/><path d="M200 261 L200 286" fill="none" stroke="#74879d" stroke-width="1.6" marker-end="url(#pipeline-sac-arrow)"/><rect x="15" y="395" width="177" height="68" rx="6" fill="#f0f7f4" stroke="#cfd9e4"/><text class="heading" x="103.5" y="419" text-anchor="middle">5a. Train two critics</text><text class="sub" x="103.5" y="439" text-anchor="middle">Predict Q; use smaller Q</text><rect x="208" y="395" width="177" height="68" rx="6" fill="#f0f4fa" stroke="#cfd9e4"/><text class="heading" x="296.5" y="419" text-anchor="middle">5b. Train the actor</text><text class="sub" x="296.5" y="439" text-anchor="middle">Higher Q + entropy</text><path d="M200 348 L200 370 L104 370 L104 395" fill="none" stroke="#74879d" stroke-width="1.6" marker-end="url(#pipeline-sac-arrow)"/><path d="M200 370 L296 370 L296 395" fill="none" stroke="#74879d" stroke-width="1.6" marker-end="url(#pipeline-sac-arrow)"/><rect x="50" y="505" width="300" height="62" rx="6" fill="#f0f5fa" stroke="#cfd9e4"/><text class="heading" x="200.0" y="529" text-anchor="middle">6. Update supporting estimates</text><text class="sub" x="200.0" y="549" text-anchor="middle">Slow target critics; automatic alpha</text><path d="M104 463 L104 484 L200 484 L200 505" fill="none" stroke="#74879d" stroke-width="1.6" marker-end="url(#pipeline-sac-arrow)"/><path d="M296 463 L296 484 L200 484" fill="none" stroke="#74879d" stroke-width="1.6" marker-end="url(#pipeline-sac-arrow)"/><path d="M350 536 L392 536 L392 12 L200 12 L200 25" fill="none" stroke="#74879d" stroke-width="1.6" marker-end="url(#pipeline-sac-arrow)"/><text class="sub" x="200" y="607" text-anchor="middle">Repeat: collect more attempts and reuse memory.</text></svg><figcaption><strong>Memory → Q estimates → better actions with exploration.</strong> Actor and critic updates are typically interleaved within the training cycle.</figcaption></figure></div><div class="card"><div class="kicker">Recent attempts</div><h3>PPO</h3><p>Collect a rollout. Estimate advantages. Make several measured updates, then collect again.</p><figure><svg class="diagram" viewBox="0 0 400 650" role="img" aria-labelledby="pipeline-ppo-title pipeline-ppo-desc"><title id="pipeline-ppo-title">PPO learning pipeline</title><desc id="pipeline-ppo-desc">Follow the numbered stages from interaction to learning and back to fresh interaction. Branches show how the actor and critics learn.</desc><defs><marker id="pipeline-ppo-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#74879d"/></marker></defs><rect x="50" y="25" width="300" height="62" rx="6" fill="#f0f5fa" stroke="#cfd9e4"/><text class="heading" x="200.0" y="49" text-anchor="middle">1. Current actor interacts</text><text class="sub" x="200.0" y="69" text-anchor="middle">Collect a recent rollout</text><rect x="50" y="112" width="300" height="62" rx="6" fill="#f0f5fa" stroke="#cfd9e4"/><text class="heading" x="200.0" y="136" text-anchor="middle">2. Keep the old likelihoods</text><text class="sub" x="200.0" y="156" text-anchor="middle">Freeze this batch’s reference policy</text><rect x="50" y="199" width="300" height="62" rx="6" fill="#f0f5fa" stroke="#cfd9e4"/><text class="heading" x="200.0" y="223" text-anchor="middle">3. Critic estimates value</text><text class="sub" x="200.0" y="243" text-anchor="middle">GAE produces advantages and returns</text><path d="M200 87 L200 112" fill="none" stroke="#74879d" stroke-width="1.6" marker-end="url(#pipeline-ppo-arrow)"/><path d="M200 174 L200 199" fill="none" stroke="#74879d" stroke-width="1.6" marker-end="url(#pipeline-ppo-arrow)"/><rect x="15" y="314" width="177" height="68" rx="6" fill="#f0f4fa" stroke="#cfd9e4"/><text class="heading" x="103.5" y="338" text-anchor="middle">4a. Update actor</text><text class="sub" x="103.5" y="358" text-anchor="middle">Compare both actor scores</text><rect x="208" y="314" width="177" height="68" rx="6" fill="#f0f7f4" stroke="#cfd9e4"/><text class="heading" x="296.5" y="338" text-anchor="middle">4b. Update critic</text><text class="sub" x="296.5" y="358" text-anchor="middle">Predict the return target</text><path d="M200 261 L200 287 L104 287 L104 314" fill="none" stroke="#74879d" stroke-width="1.6" marker-end="url(#pipeline-ppo-arrow)"/><text class="sub" x="90" y="283" text-anchor="middle">advantages</text><path d="M200 287 L296 287 L296 314" fill="none" stroke="#74879d" stroke-width="1.6" marker-end="url(#pipeline-ppo-arrow)"/><text class="sub" x="309" y="283" text-anchor="middle">returns</text><rect x="50" y="425" width="300" height="62" rx="6" fill="#f0f5fa" stroke="#cfd9e4"/><text class="heading" x="200.0" y="449" text-anchor="middle">5. Repeat for several epochs</text><text class="sub" x="200.0" y="469" text-anchor="middle">Same batch; same old likelihoods</text><path d="M104 382 L104 404 L200 404 L200 425" fill="none" stroke="#74879d" stroke-width="1.6" marker-end="url(#pipeline-ppo-arrow)"/><path d="M296 382 L296 404 L200 404" fill="none" stroke="#74879d" stroke-width="1.6" marker-end="url(#pipeline-ppo-arrow)"/><rect x="50" y="535" width="300" height="62" rx="6" fill="#f0f5fa" stroke="#cfd9e4"/><text class="heading" x="200.0" y="559" text-anchor="middle">6. Discard the rollout</text><text class="sub" x="200.0" y="579" text-anchor="middle">Collect fresh data with updated actor</text><path d="M200 487 L200 535" fill="none" stroke="#74879d" stroke-width="1.6" marker-end="url(#pipeline-ppo-arrow)"/><path d="M350 566 L392 566 L392 12 L200 12 L200 25" fill="none" stroke="#74879d" stroke-width="1.6" marker-end="url(#pipeline-ppo-arrow)"/><text class="sub" x="200" y="632" text-anchor="middle">Repeat: fresh batch, measured policy changes.</text></svg><figcaption><strong>Recent rollout → GAE → clipped actor updates.</strong> Old likelihoods and GAE targets remain fixed while the rollout is reused.</figcaption></figure></div></div>
+<div class="table-wrap"><table><thead><tr><th>Remember the job</th><th>SAC</th><th>PPO</th></tr></thead><tbody><tr><td>Which experience?</td><td>Stored transitions from different policy versions</td><td>A recent rollout from the collection policy</td></tr><tr><td>What guides the actor?</td><td>Smaller of two Q estimates, plus entropy</td><td>Advantage, with the clipped ratio objective</td></tr><tr><td>Main idea to remember</td><td>Learn from memory while exploring</td><td>Learn from fresh evidence without over-rewarding large changes</td></tr></tbody></table></div>
+
+</section><section id="questions"><h2>10. Check your understanding</h2><p>Four questions about the main ideas. Choose an answer to see its explanation.</p><div class="quiz card" id="q1" role="group" aria-labelledby="q1-heading"><h3 id="q1-heading">1. Why does SAC use slowly updated target critics as well as its trained critics?</h3><details class="quiz-hint"><summary>Hint</summary><p>Think about what happens when a prediction supplies the target for another prediction.</p></details><button type="button" aria-pressed="false" data-correct="false" data-feedback="The actor chooses motor commands. Target critics supply next-state Q estimates for critic training.">A. To choose a different motor command instead of the actor.</button><button type="button" aria-pressed="false" data-correct="true" data-feedback="The copies follow the trained critics through small weight updates, reducing rapid feedback in the Q part of the target.">B. To make the predicted part of the critic’s training target change more gradually.</button><button type="button" aria-pressed="false" data-correct="false" data-feedback="The replay buffer can store unsuccessful attempts. Target critics affect the future-value estimate in a training target.">C. To prevent the replay buffer from storing unsuccessful attempts.</button><button type="button" aria-pressed="false" data-correct="false" data-feedback="Slow updates do not guarantee accurate predictions. They help make the reference used for learning steadier.">D. To guarantee that both critics always predict the true return.</button><p class="feedback" aria-live="polite"></p></div><div class="quiz card" id="q2" role="group" aria-labelledby="q2-heading"><h3 id="q2-heading">2. An action’s old probability is 20%, its new probability is 30%, and its advantage is +2. With clip range 0.18, which statement describes PPO’s actor objective?</h3><details class="quiz-hint"><summary>Hint</summary><p>Calculate new ÷ old, make a clipped copy, multiply each by the advantage, then take the smaller score.</p></details><button type="button" aria-pressed="false" data-correct="false" data-feedback="The actor score is 2.36, but clipping the objective does not reset the actual policy probability.">A. The new probability is reset to 23.6%, giving a score of 2.36.</button><button type="button" aria-pressed="false" data-correct="false" data-feedback="The clipped score is 1.18 × 2 = 2.36, which is smaller than the ordinary score of 3.00.">B. The ratio is 1.50 and PPO uses the ordinary score of 3.00.</button><button type="button" aria-pressed="false" data-correct="false" data-feedback="The calculation limits an actor learning score. It does not cap the environment reward.">C. The action’s environment reward is capped at 2.36.</button><button type="button" aria-pressed="false" data-correct="true" data-feedback="30 ÷ 20 = 1.50. PPO chooses min(1.50 × 2, 1.18 × 2) = 2.36, without imposing a hard probability bound.">D. The actual ratio is 1.50; its clipped copy is 1.18; PPO uses score 2.36.</button><p class="feedback" aria-live="polite"></p></div><div class="quiz card" id="q3" role="group" aria-labelledby="q3-heading"><h3 id="q3-heading">3. Three successive prediction errors are +2, +1 and −1. In a three-step GAE example with later-step weight γλ = 0.5, what is the first advantage estimate?</h3><details class="quiz-hint"><summary>Hint</summary><p>The successive weights are 1, 0.5 and 0.25. Keep the sign of the last error.</p></details><button type="button" aria-pressed="false" data-correct="true" data-feedback="The estimate is 2 + 0.5 × 1 + 0.25 × (−1) = 2.25.">A. 2.25</button><button type="button" aria-pressed="false" data-correct="false" data-feedback="2.00 is the unweighted sum of these errors. GAE here gives the later errors weights 0.5 and 0.25.">B. 2.00</button><button type="button" aria-pressed="false" data-correct="false" data-feedback="2.50 omits the last weighted error. Subtracting 0.25 gives 2.25.">C. 2.50</button><button type="button" aria-pressed="false" data-correct="false" data-feedback="The final error is negative, so its contribution is −0.25 rather than +0.25.">D. 2.75</button><p class="feedback" aria-live="polite"></p></div><div class="quiz card" id="q4" role="group" aria-labelledby="q4-heading"><h3 id="q4-heading">4. After learning from a batch, how do SAC and PPO typically get experience for later updates?</h3><details class="quiz-hint"><summary>Hint</summary><p>Compare replay memory with a rollout collected by a recent policy.</p></details><button type="button" aria-pressed="false" data-correct="false" data-feedback="Both keep interacting. SAC samples replay memory, while PPO collects a fresh rollout after the current rollout’s learning passes.">A. Both keep training indefinitely on the same first batch.</button><button type="button" aria-pressed="false" data-correct="false" data-feedback="SAC reuses replay transitions. PPO also uses its current rollout for several epochs before replacing it.">B. Both discard every transition immediately after one gradient update.</button><button type="button" aria-pressed="false" data-correct="true" data-feedback="SAC is off-policy and reuses replay data. PPO is on-policy and replaces its recent rollout after the configured learning passes.">C. SAC can reuse older replay transitions; PPO collects a fresh rollout after its learning passes.</button><button type="button" aria-pressed="false" data-correct="false" data-feedback="This reverses the roles. SAC uses replay memory; PPO uses a recent rollout for its current learning phase.">D. PPO keeps a long replay history; SAC uses only its latest rollout.</button><p class="feedback" aria-live="polite"></p></div></section></main></div>
+<footer><div class="shell"><p><strong>Sources and scope.</strong> Code values and notebook-specific details follow the supplied Week 10 Parts A, B and C notebooks. Numerical teaching examples are illustrative.</p><ul class="source-list"><li><a href="https://gymnasium.farama.org/environments/box2d/bipedal_walker/">Gymnasium: the BipedalWalker task</a></li><li><a href="https://spinningup.openai.com/en/latest/algorithms/sac.html">OpenAI Spinning Up: SAC</a></li><li><a href="https://spinningup.openai.com/en/latest/algorithms/ppo.html">OpenAI Spinning Up: PPO clipping</a></li><li><a href="https://stable-baselines3.readthedocs.io/en/master/_modules/stable_baselines3/ppo/ppo.html">Stable-Baselines3: PPO implementation</a></li><li><a href="https://arxiv.org/abs/1506.02438">Schulman and colleagues: Generalised Advantage Estimation</a></li></ul></div></footer><script>
+(function () {
+  const el = id => document.getElementById(id);
+  const fmt = x => (Math.abs(x) < 0.000001 ? 0 : x).toFixed(2);
+  function signedBar(id, value, max) {
+    const bar = el(id);
+    const width = Math.min(50, Math.abs(value) / max * 50);
+    bar.style.width = width + '%';
+    bar.style.left = (value < 0 ? 50 - width : 50) + '%';
+    bar.classList.toggle('negative', value < 0);
+  }
+  function updatePPO() {
+    const p = Number(el('new-prob').value);
+    const a = Number(el('advantage').value);
+    const ratio = p / 20;
+    const clipped = Math.max(0.82, Math.min(1.18, ratio));
+    const ordinary = ratio * a, capped = clipped * a, chosen = Math.min(ordinary, capped);
+    el('prob-output').textContent = p + '%';
+    el('actual-ratio').textContent = fmt(ratio);
+    el('clipped-ratio').textContent = fmt(clipped);
+    el('ordinary-score').textContent = fmt(ordinary);
+    el('clipped-score').textContent = fmt(capped);
+    el('chosen-score').textContent = fmt(chosen);
+    signedBar('ordinary-bar', ordinary, 4.5);
+    signedBar('clipped-bar', capped, 4.5);
+    signedBar('chosen-bar', chosen, 4.5);
+    const sx = r => 70 + r / 2.25 * 500;
+    const sy = v => a > 0 ? 200 - v / 4.5 * 160 : 40 - v / 4.5 * 160;
+    const ordinaryPoints = [], chosenPoints = [];
+    for (let i = 0; i <= 225; i++) {
+      const r = i / 100;
+      const score = Math.min(r * a, Math.max(0.82, Math.min(1.18, r)) * a);
+      ordinaryPoints.push(sx(r).toFixed(3) + ',' + sy(r*a).toFixed(3));
+      chosenPoints.push(sx(r).toFixed(3) + ',' + sy(score).toFixed(3));
+    }
+    el('plot-ordinary').setAttribute('points', ordinaryPoints.join(' '));
+    el('plot-chosen').setAttribute('points', chosenPoints.join(' '));
+    el('plot-selection').textContent = 'Selected ratio: ' + fmt(ratio);
+    el('plot-marker').setAttribute('x1', sx(ratio));
+    el('plot-marker').setAttribute('x2', sx(ratio));
+    el('plot-point').setAttribute('cx', sx(ratio));
+    el('plot-point').setAttribute('cy', sy(chosen));
+    el('plot-zero').setAttribute('y', a > 0 ? 205 : 45);
+    el('plot-limit').setAttribute('y', a > 0 ? 45 : 205);
+    el('plot-limit').textContent = a > 0 ? '4.5' : '−4.5';
+
+    let explanation;
+    if (a > 0 && ratio > 1.18) explanation = 'Good action: increasing its probability beyond 23.6% gives no extra actor score for this sample.';
+    else if (a < 0 && ratio < 0.82) explanation = 'Bad action: reducing its probability below 16.4% gives no extra improvement in actor score for this sample.';
+    else if (a > 0 && ratio < 1) explanation = 'Good action made less likely: the ordinary score is lower. PPO keeps that weaker score, even below the clip interval.';
+    else if (a < 0 && ratio > 1) explanation = 'Bad action made more likely: the ordinary score is more negative. PPO preserves that penalty, even above the clip interval.';
+    else explanation = 'The ordinary and clipped scores agree here. Remember: PPO maximises the chosen score, while its code minimises the negative loss.';
+    el('ppo-explanation').textContent = explanation + ' Chosen score: ' + fmt(chosen) + '.';
+  }
+  function updateGAE() {
+    const q = Number(el('gae-weight').value);
+    const values = [2, q, -q*q];
+    el('weight-output').textContent = fmt(q);
+    ['now','next','later'].forEach((name,i) => {
+      el('gae-'+name).textContent = fmt(values[i]);
+      signedBar('gae-'+name+'-bar', values[i], 2);
+    });
+    el('gae-total').textContent = fmt(values.reduce((a,b)=>a+b,0));
+  }
+  el('new-prob').addEventListener('input', updatePPO);
+  el('advantage').addEventListener('change', updatePPO);
+  el('gae-weight').addEventListener('input', updateGAE);
+  updatePPO(); updateGAE();
+})();
+
+(function () {
+  document.querySelectorAll('#questions .quiz').forEach(quiz => {
+    const buttons = quiz.querySelectorAll('button');
+    const feedback = quiz.querySelector('.feedback');
+    buttons.forEach(button => button.addEventListener('click', () => {
+      buttons.forEach(other => other.setAttribute('aria-pressed', other === button ? 'true' : 'false'));
+      feedback.textContent = button.getAttribute('data-feedback');
+      feedback.style.color = button.getAttribute('data-correct') === 'true' ? '#23754f' : '#344357';
+    }));
+  });
+})();
+</script></body></html>
